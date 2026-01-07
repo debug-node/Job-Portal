@@ -1,8 +1,8 @@
-import app from "./app.js";
 import dotenv from "dotenv";
-import { sql } from "./utils/db.js";
-
 dotenv.config();
+
+import app from "./app.js";
+import { sql } from "./utils/db.js";
 
 async function initDb() {
     try {
@@ -10,7 +10,7 @@ async function initDb() {
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-                CREATE TYPE user_role AS ENUM ('job_seeker', 'recruiter');
+                CREATE TYPE user_role AS ENUM ('jobseeker', 'recruiter');
             END IF;
         END$$;
         `;
