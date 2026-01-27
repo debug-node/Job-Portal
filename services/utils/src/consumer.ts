@@ -30,8 +30,8 @@ export const startSendMailConsumer = async () => {
                         port: 465,
                         secure: true,
                         auth: {
-                            user: "xyz",
-                            pass: "abc",
+                            user: process.env.SMTP_USER,
+                            pass: process.env.SMTP_PASS,
                         },
                     });
 
@@ -41,6 +41,9 @@ export const startSendMailConsumer = async () => {
                         subject,
                         html,
                     });
+
+                    console.log(`✅ Mail dispatched to ${to} with subject "${subject}"`);
+
                 } catch (error) {
                     console.error("❌ Error sending email:", error);
                 }
