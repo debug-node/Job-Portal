@@ -1,1 +1,249 @@
-# Job-Portal
+# Job Portal
+
+A microservices-based job portal application built with Node.js, Express, TypeScript, and Kafka for real-time communication.
+
+## 📋 Project Overview
+
+Job Portal is a modern job marketplace platform with a microservices architecture consisting of:
+
+- **Auth Service**: User authentication, registration, password management, and JWT-based security
+- **User Service**: User profile management and related operations
+- **Utils Service**: Shared utilities including email notifications via Kafka and file uploads to Cloudinary
+- **Frontend**: Client-side application (coming soon)
+
+## 🏗️ Architecture
+
+### Technology Stack
+
+**Backend Services:**
+- **Runtime**: Node.js with TypeScript
+- **Framework**: Express.js 5.2.1
+- **Authentication**: JWT (jsonwebtoken)
+- **Database**: PostgreSQL (Neon Serverless)
+- **Caching**: Redis
+- **Message Queue**: Apache Kafka
+- **File Upload**: Cloudinary + DataURI
+- **Email**: Nodemailer
+- **Password Hashing**: bcrypt
+- **File Handling**: Multer
+
+**Development Tools:**
+- TypeScript 5.9.3
+- Nodemon (hot reload)
+- Concurrently (run multiple processes)
+
+## 📁 Project Structure
+
+```
+Job-Portal/
+├── frontend/                 # React/Vue frontend (empty)
+├── services/
+│   ├── auth/                # Authentication microservice
+│   │   ├── src/
+│   │   │   ├── app.ts       # Express app setup
+│   │   │   ├── index.ts     # Server entry point
+│   │   │   ├── producer.ts  # Kafka producer
+│   │   │   ├── templete.ts  # Email templates
+│   │   │   ├── controllers/
+│   │   │   │   └── auth.ts  # Auth logic
+│   │   │   ├── middleware/
+│   │   │   │   └── multer.ts # File upload middleware
+│   │   │   ├── routes/
+│   │   │   │   └── auth.ts  # Auth endpoints
+│   │   │   └── utils/
+│   │   │       ├── buffer.ts
+│   │   │       ├── db.ts    # Database connector
+│   │   │       ├── errorHandler.ts
+│   │   │       └── TryCatch.ts
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   ├── user/                # User service (in development)
+│   │
+│   ├── utils/               # Utility microservice
+│   │   ├── src/
+│   │   │   ├── index.ts
+│   │   │   ├── consumer.ts  # Kafka consumer
+│   │   │   └── routes.ts
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   └── package.json (if applicable)
+│
+├── daily-documentation.md   # Development progress tracking
+└── README.md               # This file
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 16+
+- npm or yarn
+- PostgreSQL (Neon)
+- Redis
+- Apache Kafka
+- Cloudinary account
+- Email service credentials
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd Job-Portal
+   ```
+
+2. **Install Auth Service**
+   ```bash
+   cd services/auth
+   npm install
+   ```
+
+3. **Install Utils Service**
+   ```bash
+   cd services/utils
+   npm install
+   ```
+
+4. **Setup Environment Variables**
+   
+   Create `.env` files in each service directory:
+   
+   **services/auth/.env**
+   ```
+   DB_URL=postgresql://...
+   REDIS_URL=redis://...
+   JWT_SECRET=your_jwt_secret
+   KAFKA_BROKERS=localhost:9092
+   ```
+   
+   **services/utils/.env**
+   ```
+   KAFKA_BROKERS=localhost:9092
+   CLOUDINARY_URL=...
+   SMTP_HOST=...
+   SMTP_USER=...
+   SMTP_PASS=...
+   ```
+
+### Running Services
+
+**Development Mode:**
+
+Auth Service:
+```bash
+cd services/auth
+npm run dev
+```
+
+Utils Service:
+```bash
+cd services/utils
+npm run dev
+```
+
+**Production Build:**
+
+```bash
+npm run build
+npm start
+```
+
+## 🔑 Key Features
+
+### Auth Service
+- User registration with email verification
+- Login with JWT token generation
+- Forgot password with email reset link
+- Password reset functionality
+- Profile file upload (avatar/resume)
+- bcrypt password hashing
+- Multer file upload handling
+
+### Utils Service
+- Kafka consumer for email events
+- Nodemailer email dispatch
+- Cloudinary file storage
+- Email template system
+
+### Database
+- PostgreSQL with Neon serverless
+- Tables: `users`, `skills`, `user_skills`
+- Enum: `user_role`
+
+### Message Queue
+- Apache Kafka for async communication
+- Topics: `send-mail` (event-driven email notifications)
+
+## 📝 API Endpoints
+
+### Auth Routes (`/api/auth`)
+- `POST /register` - User registration
+- `POST /login` - User login
+- `POST /forgot-password` - Request password reset
+- `POST /reset-password` - Reset password
+- File upload endpoints for profile management
+
+## 🔄 Service Communication
+
+The microservices communicate via:
+- **Kafka**: Async event-driven messaging (e.g., send-mail events)
+- **HTTP/REST**: Synchronous service-to-service calls via Axios
+- **Redis**: Caching and temporary token storage
+
+## 📚 Documentation
+
+See [daily-documentation.md](daily-documentation.md) for detailed day-by-day development progress and implementation details.
+
+## 🛠️ Scripts
+
+**Auth Service:**
+- `npm run dev` - Start in development mode with hot reload
+- `npm run build` - Compile TypeScript
+- `npm start` - Run compiled server
+- `npm test` - Run tests
+
+**Utils Service:**
+- `npm run dev` - Start in development mode
+- `npm run build` - Compile TypeScript
+- `npm start` - Run compiled server
+- `npm test` - Run tests
+
+## 📦 Dependencies Overview
+
+### Auth Service
+- Express 5.2.1 - Web framework
+- Kafka.js 2.2.4 - Kafka client
+- jsonwebtoken 9.0.3 - JWT token handling
+- bcrypt 6.0.0 - Password hashing
+- Multer 2.0.2 - File upload handling
+- Redis 5.10.0 - Caching
+- Axios 1.13.2 - HTTP client
+
+### Utils Service
+- Express 5.2.1 - Web framework
+- Kafka.js 2.2.4 - Kafka consumer
+- Cloudinary 2.8.0 - File storage
+- Nodemailer 7.0.12 - Email service
+- CORS 2.8.5 - Cross-Origin Resource Sharing
+
+## 🚧 Development Status
+
+- ✅ Auth Service - In Development
+- 🔄 User Service - Planning Phase
+- ✅ Utils Service - In Development
+- 📱 Frontend - Not Started
+
+## 📄 License
+
+ISC
+
+## 👨‍💻 Author
+
+**Aditya Kumar**  
+GitHub: [debug-node](https://github.com/debug-node)
+
+---
+
+For detailed development progress, refer to [daily-documentation.md](daily-documentation.md)
