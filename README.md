@@ -7,7 +7,7 @@ A microservices-based job portal application built with Node.js, Express, TypeSc
 Job Portal is a modern job marketplace platform with a microservices architecture consisting of:
 
 - **Auth Service**: User authentication, registration, password management, and JWT-based security
-- **User Service**: User profile management and related operations
+- **User Service**: User profile management and protected profile endpoint
 - **Utils Service**: Shared utilities including email notifications via Kafka and file uploads to Cloudinary
 - **Frontend**: Client-side application (coming soon)
 
@@ -58,8 +58,23 @@ Job-Portal/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   ├── user/                # User service (in development)
-│   │
+│   ├── user/                # User service
+│   │   ├── src/
+│   │   │   ├── index.ts     # Server entry point
+│   │   │   ├── controllers/
+│   │   │   │   └── user.ts  # User profile logic
+│   │   │   ├── middleware/
+│   │   │   │   ├── auth.ts  # JWT auth middleware
+│   │   │   │   └── multer.ts
+│   │   │   ├── routes/
+│   │   │   │   └── user.ts  # User endpoints
+│   │   │   └── utils/
+│   │   │       ├── buffer.ts
+│   │   │       ├── db.ts
+│   │   │       ├── errorHandler.ts
+│   │   │       └── TryCatch.ts
+│   │   ├── package.json
+│   │   └── tsconfig.json
 │   ├── utils/               # Utility microservice
 │   │   ├── src/
 │   │   │   ├── index.ts
@@ -106,7 +121,13 @@ Job-Portal/
    npm install
    ```
 
-4. **Setup Environment Variables**
+4. **Install User Service**
+   ```bash
+   cd services/user
+   npm install
+   ```
+
+5. **Setup Environment Variables**
    
    Create `.env` files in each service directory:
    
@@ -114,17 +135,25 @@ Job-Portal/
    ```
    DB_URL=postgresql://...
    REDIS_URL=redis://...
-   JWT_SECRET=your_jwt_secret
-   KAFKA_BROKERS=localhost:9092
+   JWT_SEC=your_jwt_secret
+   KAFKA_BROKER=localhost:9092
    ```
    
    **services/utils/.env**
    ```
-   KAFKA_BROKERS=localhost:9092
-   CLOUDINARY_URL=...
-   SMTP_HOST=...
+   KAFKA_BROKER=localhost:9092
+   CLOUD_NAME=...
+   API_KEY=...
+   API_SECRET=...
    SMTP_USER=...
    SMTP_PASS=...
+   ```
+
+   **services/user/.env**
+   ```
+   PORT=5002
+   DB_URL=postgresql://...
+   JWT_SEC=your_jwt_secret
    ```
 
 ### Running Services
@@ -140,6 +169,12 @@ npm run dev
 Utils Service:
 ```bash
 cd services/utils
+npm run dev
+```
+
+User Service:
+```bash
+cd services/user
 npm run dev
 ```
 
@@ -167,6 +202,10 @@ npm start
 - Cloudinary file storage
 - Email template system
 
+### User Service
+- JWT-protected profile endpoint
+- Auth middleware for user context
+
 ### Database
 - PostgreSQL with Neon serverless
 - Tables: `users`, `skills`, `user_skills`
@@ -184,6 +223,9 @@ npm start
 - `POST /forgot-password` - Request password reset
 - `POST /reset-password` - Reset password
 - File upload endpoints for profile management
+
+### User Routes (`/api/user`)
+- `GET /me` - Get current user profile (requires `Authorization: Bearer <token>`)
 
 ## 🔄 Service Communication
 
@@ -210,6 +252,12 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - `npm start` - Run compiled server
 - `npm test` - Run tests
 
+**User Service:**
+- `npm run dev` - Start in development mode
+- `npm run build` - Compile TypeScript
+- `npm start` - Run compiled server
+- `npm test` - Run tests
+
 ## 📦 Dependencies Overview
 
 ### Auth Service
@@ -228,10 +276,17 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - Nodemailer 7.0.12 - Email service
 - CORS 2.8.5 - Cross-Origin Resource Sharing
 
+### User Service
+- Express 5.2.1 - Web framework
+- jsonwebtoken 9.0.3 - JWT token handling
+- Multer 2.0.2 - File upload handling
+- Neon Serverless - Database connector
+- CORS 2.8.6 - Cross-Origin Resource Sharing
+
 ## 🚧 Development Status
 
 - ✅ Auth Service - In Development
-- 🔄 User Service - Planning Phase
+- ✅ User Service - In Development
 - ✅ Utils Service - In Development
 - 📱 Frontend - Not Started
 

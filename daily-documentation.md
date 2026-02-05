@@ -74,6 +74,25 @@
 
 ---
 
+## Day 4 — User Service Setup
+**Goal:** User service ka base setup aur initial contents add karna.
+
+**Highlights**
+- User service scaffold kiya: Express app + routes + controllers + middleware + utils.  
+  [services/user/src/index.ts](services/user/src/index.ts)
+- Auth middleware `isAuth` add kiya jo JWT verify karke user profile fetch karta hai.  
+  [services/user/src/middleware/auth.ts](services/user/src/middleware/auth.ts)
+- `GET /api/user/me` endpoint add kiya.  
+  [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
+- User service configs and scripts add kiye.  
+  [services/user/package.json](services/user/package.json)
+  [services/user/tsconfig.json](services/user/tsconfig.json)
+
+**Notes**
+- `services/user` ka `.env` abhi repo me add nahi dikh raha.
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
@@ -92,6 +111,13 @@ Source: [services/auth/src/routes/auth.ts](services/auth/src/routes/auth.ts)
 | POST | /upload | Upload/replace file | JSON | If `public_id` present, old file is deleted |
 
 Source: [services/utils/src/routes.ts](services/utils/src/routes.ts)
+
+### User Service (Base: `/api/user`)
+| Method | Endpoint | Description | Body/Params | Notes |
+| --- | --- | --- | --- | --- |
+| GET | /me | Get current user profile | Header | Requires `Authorization: Bearer <token>` |
+
+Source: [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
 
 ---
 
@@ -116,6 +142,14 @@ Source: [services/utils/package.json](services/utils/package.json)
 **Required Services**
 - Kafka broker, Redis, Postgres/Neon, Cloudinary, SMTP
 
+### User Service
+1. Create .env (see Environment Variables Details).
+2. Install dependencies.
+3. Build and start.
+
+**Scripts**: `npm run build`, `npm run start`, `npm run dev`  
+Source: [services/user/package.json](services/user/package.json)
+
 ---
 
 ## Architecture Diagram (Text)
@@ -136,6 +170,13 @@ Utils Service (Express)
   |-- Cloudinary         [file storage]
   |-- Kafka Consumer     [send-mail]
   |-- SMTP (Nodemailer)  [email dispatch]
+
+Client
+  |
+  | HTTP /api/user/*
+  v
+User Service (Express)
+  |-- PostgreSQL (Neon)  [users, skills, user_skills]
 ```
 
 ---
@@ -167,6 +208,15 @@ Source: [services/utils/.env.example](services/utils/.env.example)
 | `KAFKA_BROKER` | Kafka broker address (code uses `KAFKA_BROKER`) |
 | `SMTP_USER` | SMTP user email |
 | `SMTP_PASS` | SMTP password |
+
+### User Service
+Source: runtime usage in code
+
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | Service port |
+| `DB_URL` | Neon/Postgres connection string |
+| `JWT_SEC` | JWT secret key |
 
 ---
 
@@ -300,6 +350,28 @@ Content-Type: application/json
 {
   "url": "https://res.cloudinary.com/.../file.pdf",
   "public_id": "abc123"
+}
+```
+
+### My Profile (User Service)
+**Request**
+```
+GET /api/user/me
+Authorization: Bearer <jwt>
+```
+
+**Response**
+```
+{
+  "user_id": 1,
+  "name": "Aman",
+  "email": "aman@example.com",
+  "phone_number": "9999999999",
+  "role": "recruiter",
+  "bio": null,
+  "resume": null,
+  "profile_pic": null,
+  "skills": []
 }
 ```
 
