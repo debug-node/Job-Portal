@@ -154,6 +154,7 @@ Job-Portal/
    PORT=5002
    DB_URL=postgresql://...
    JWT_SEC=your_jwt_secret
+   UPLOAD_SERVICE=http://localhost:5001
    ```
 
 ### Running Services
@@ -203,8 +204,12 @@ npm start
 - Email template system
 
 ### User Service
-- JWT-protected profile endpoint
+- JWT-protected profile endpoints
 - Auth middleware for user context
+- Get user profile by ID
+- Update user profile (name, phone, bio)
+- Update profile picture with file upload
+- Axios integration for inter-service communication (utils service)
 
 ### Database
 - PostgreSQL with Neon serverless
@@ -226,6 +231,9 @@ npm start
 
 ### User Routes (`/api/user`)
 - `GET /me` - Get current user profile (requires `Authorization: Bearer <token>`)
+- `GET /:userId` - Get any user's profile by ID (requires auth)
+- `PUT /update/profile` - Update user profile info (name, phone, bio)
+- `PUT /update/pic` - Update profile picture (requires file upload)
 
 ## 🔄 Service Communication
 
@@ -280,6 +288,7 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - Express 5.2.1 - Web framework
 - jsonwebtoken 9.0.3 - JWT token handling
 - Multer 2.0.2 - File upload handling
+- Axios 1.13.5 - HTTP client for inter-service calls
 - Neon Serverless - Database connector
 - CORS 2.8.6 - Cross-Origin Resource Sharing
 

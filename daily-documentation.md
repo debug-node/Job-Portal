@@ -93,6 +93,48 @@
 
 ---
 
+## Day 5 — User Profile CRUD Features
+**Goal:** User service me complete profile management features add karna.
+
+**Highlights**
+- **Dependencies Update**: Axios aur its type definitions add kiye for HTTP communication.  
+  [services/user/package.json](services/user/package.json)
+  - Added: `axios@1.13.5` and `@types/axios@0.9.36`
+- **Get User Profile by ID**: Kisi bhi user ka profile fetch karne ka endpoint.  
+  [services/user/src/controllers/user.ts](services/user/src/controllers/user.ts)
+  - `getUserProfile()` function with SQL query including user_skills and skills join
+  - Aggregates skills array using `ARRAY_AGG`
+  - 404 error handling if user not found
+- **Update User Profile**: User apna basic info update kar sake.  
+  [services/user/src/controllers/user.ts](services/user/src/controllers/user.ts)
+  - `updateUserProfile()` updates name, phone_number, bio
+  - Authenticated users only (via `isAuth` middleware)
+- **Update Profile Picture**: User apni profile pic upload/replace kar sake.  
+  [services/user/src/controllers/user.ts](services/user/src/controllers/user.ts)
+  - `updateProfilePic()` uses multer for file upload
+  - Converts file to buffer using `getBuffer()`
+  - Sends buffer to utils service via axios POST to `/api/utils/upload`
+  - Old profile pic replace ho jati hai (via `public_id`)
+  - Updates DB with new URL and public_id
+- **New Routes**: 3 new routes added.  
+  [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
+  - `GET /:userId` - Get any user's profile (authenticated)
+  - `PUT /update/profile` - Update own profile info (authenticated)
+  - `PUT /update/pic` - Update profile picture (authenticated + multer)
+
+**Key Flows**
+- **Get User Profile**: Client sends userId → SQL query with joins → Returns user + skills array
+- **Update Profile**: Client sends JSON → Validate auth → Update DB → Return updated fields
+- **Update Profile Pic**: Client uploads file → Multer processes → Buffer conversion → Axios POST to utils service → Update DB with Cloudinary URL
+
+**Technical Details**
+- Axios configuration includes type safety with TypeScript generics
+- Error handling via `ErrorHandler` for 400/401/404 scenarios
+- All profile operations require JWT authentication
+- Profile pic update integrates with existing utils/upload service
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
@@ -116,6 +158,9 @@ Source: [services/utils/src/routes.ts](services/utils/src/routes.ts)
 | Method | Endpoint | Description | Body/Params | Notes |
 | --- | --- | --- | --- | --- |
 | GET | /me | Get current user profile | Header | Requires `Authorization: Bearer <token>` |
+| GET | /:userId | Get user profile by ID | URL param + Header | Requires auth, returns user with skills |
+| PUT | /update/profile | Update user profile | JSON + Header | Updates name, phoneNumber, bio |
+| PUT | /update/pic | Update profile picture | FormData + Header | Requires file upload via multer |
 
 Source: [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
 
@@ -177,6 +222,11 @@ Client
   v
 User Service (Express)
   |-- PostgreSQL (Neon)  [users, skills, user_skills]
+  |
+  | HTTP /api/utils/upload
+  v
+Utils Service (Express)
+  |-- Cloudinary         [profile pic storage]
 ```
 
 ---
@@ -217,6 +267,7 @@ Source: runtime usage in code
 | `PORT` | Service port |
 | `DB_URL` | Neon/Postgres connection string |
 | `JWT_SEC` | JWT secret key |
+| `UPLOAD_SERVICE` | Utils service base URL (for profile pic upload) |
 
 ---
 
@@ -375,6 +426,81 @@ Authorization: Bearer <jwt>
 }
 ```
 
+### Get User Profile by ID (User Service)
+**Request**
+```
+GET /api/user/:userId
+Authorization: Bearer <jwt>
+```
+
+**Response**
+```
+{
+  "user_id": 2,
+  "name": "Rahul",
+  "email": "rahul@example.com",
+  "phone_number": "8888888888",
+  "role": "jobseeker",
+  "bio": "Full stack developer",
+  "resume": "https://res.cloudinary.com/.../resume.pdf",
+  "resume_public_id": "resume_abc123",
+  "profile_pic": "https://res.cloudinary.com/.../pic.jpg",
+  "profile_pic_public_id": "pic_xyz789",
+  "subscription": null,
+  "skills": ["JavaScript", "React", "Node.js"]
+}
+```
+
+### Update User Profile (User Service)
+**Request**
+```
+PUT /api/user/update/profile
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{
+  "name": "Aman Kumar",
+  "phoneNumber": "9999999990",
+  "bio": "Senior recruiter with 5 years experience"
+}
+```
+
+**Response**
+```
+{
+  "message": "Profile updated successfully",
+  "updatedUser": {
+    "user_id": 1,
+    "name": "Aman Kumar",
+    "phone_number": "9999999990",
+    "bio": "Senior recruiter with 5 years experience"
+  }
+}
+```
+
+### Update Profile Picture (User Service)
+**Request**
+```
+PUT /api/user/update/pic
+Authorization: Bearer <jwt>
+Content-Type: multipart/form-data
+
+Fields:
+  file=<profile-pic.jpg>
+```
+
+**Response**
+```
+{
+  "message": "Profile picture updated successfully",
+  "updatedUser": {
+    "user_id": 1,
+    "name": "Aman Kumar",
+    "profile_pic": "https://res.cloudinary.com/.../new-pic.jpg"
+  }
+}
+```
+
 ---
 
 ## Tech Stack Summary
@@ -386,3 +512,4 @@ Authorization: Bearer <jwt>
 - **Nodemailer**
 - **Multer + DataURI**
 - **JWT + bcrypt**
+- **Axios** (HTTP client for inter-service communication)
