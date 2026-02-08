@@ -24,7 +24,9 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
+    "@types/axios": "^0.9.36",
     "@types/jsonwebtoken": "^9.0.10",
+    "axios": "^1.13.5",
     "cors": "^2.8.6",
     "datauri": "^4.1.0",
     "dotenv": "^17.2.3",
