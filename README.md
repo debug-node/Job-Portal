@@ -209,6 +209,8 @@ npm start
 - Get user profile by ID
 - Update user profile (name, phone, bio)
 - Update profile picture with file upload
+- Update resume with file upload
+- Add/remove user skills with transaction handling
 - Axios integration for inter-service communication (utils service)
 
 ### Database
@@ -234,6 +236,9 @@ npm start
 - `GET /:userId` - Get any user's profile by ID (requires auth)
 - `PUT /update/profile` - Update user profile info (name, phone, bio)
 - `PUT /update/pic` - Update profile picture (requires file upload)
+- `PUT /update/resume` - Update resume (requires file upload)
+- `POST /skill/add` - Add skill to user profile
+- `DELETE /skill/delete` - Remove skill from user profile
 
 ## 🔄 Service Communication
 

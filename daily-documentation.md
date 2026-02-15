@@ -135,6 +135,47 @@
 
 ---
 
+## Day 6 — Resume Upload + Skills Management (User Service)
+**Goal:** User resume update aur complete skill management features.
+
+**Highlights**
+- **Update Resume**: User resume upload aur replace functionality complete.  
+  [services/user/src/controllers/user.ts](services/user/src/controllers/user.ts)
+  - `updateResume()` handles file upload via multer
+  - Converts file to buffer aur sends to utils service
+  - Old resume replace via `resume_public_id`
+  - Returns updated user with new resume URL
+- **Add Skill to User**: Complete transaction-based skill add flow.  
+  [services/user/src/controllers/user.ts](services/user/src/controllers/user.ts)
+  - `addSkillToUser()` validates skill name
+  - SQL transaction: INSERT skill (ON CONFLICT update) + INSERT user_skills (ON CONFLICT do nothing)
+  - Returns 200 if skill already exists, 201-like response if added
+  - Proper COMMIT/ROLLBACK transaction handling
+- **Delete Skill from User**: User skill removal capability.  
+  [services/user/src/controllers/user.ts](services/user/src/controllers/user.ts)
+  - `deleteSkillFromUser()` deletes from user_skills where skill name matches
+  - Throws 404 if skill not found for user
+- **Auth Middleware Fix**: Minor import cleanup (removed unused `e` variable).  
+  [services/user/src/middleware/auth.ts](services/user/src/middleware/auth.ts)
+- **New Routes**: 3 new endpoints wired.  
+  [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
+  - `PUT /update/resume` - Upload/replace resume (authenticated + multer)
+  - `POST /skill/add` - Add skill to user (authenticated, JSON body)
+  - `DELETE /skill/delete` - Remove skill from user (authenticated, JSON body)
+
+**Key Flows**
+- **Update Resume**: Client uploads → Multer processes → Axios POST to utils service → DB update
+- **Add Skill**: Skill name → Check user exists → Insert skill (or reuse) → Link to user_skills → Transaction commit
+- **Delete Skill**: Skill name → DELETE from user_skills → Validate deletion → Return success message
+
+**Technical Details**
+- Transaction handling with `BEGIN`/`COMMIT`/`ROLLBACK` for data consistency
+- `ON CONFLICT` clauses prevent duplicate skills + user_skill links
+- `deleteSkillFromUser()` uses subquery to find skill_id by name
+- All operations require JWT authentication
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
@@ -161,6 +202,9 @@ Source: [services/utils/src/routes.ts](services/utils/src/routes.ts)
 | GET | /:userId | Get user profile by ID | URL param + Header | Requires auth, returns user with skills |
 | PUT | /update/profile | Update user profile | JSON + Header | Updates name, phoneNumber, bio |
 | PUT | /update/pic | Update profile picture | FormData + Header | Requires file upload via multer |
+| PUT | /update/resume | Update resume | FormData + Header | Requires file upload via multer |
+| POST | /skill/add | Add skill to user | JSON + Header | Body: `{ skillName: "..." }` |
+| DELETE | /skill/delete | Remove skill from user | JSON + Header | Body: `{ skillName: "..." }` |
 
 Source: [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
 
@@ -498,6 +542,74 @@ Fields:
     "name": "Aman Kumar",
     "profile_pic": "https://res.cloudinary.com/.../new-pic.jpg"
   }
+}
+```
+
+### Update Resume (User Service)
+**Request**
+```
+PUT /api/user/update/resume
+Authorization: Bearer <jwt>
+Content-Type: multipart/form-data
+
+Fields:
+  file=<resume.pdf>
+```
+
+**Response**
+```
+{
+  "message": "Resume updated successfully",
+  "updatedUser": {
+    "user_id": 2,
+    "name": "Rahul",
+    "resume": "https://res.cloudinary.com/.../new-resume.pdf"
+  }
+}
+```
+
+### Add Skill (User Service)
+**Request**
+```
+POST /api/user/skill/add
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{
+  "skillName": "Python"
+}
+```
+
+**Response** (New Skill)
+```
+{
+  "message": "Skill Python added to user successfully"
+}
+```
+
+**Response** (Skill Already Exists)
+```
+{
+  "message": "User already has this skill"
+}
+```
+
+### Delete Skill (User Service)
+**Request**
+```
+DELETE /api/user/skill/delete
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{
+  "skillName": "Python"
+}
+```
+
+**Response**
+```
+{
+  "message": "Skill Python deleted successfully"
 }
 ```
 
