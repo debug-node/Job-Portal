@@ -89,7 +89,8 @@
   [services/user/tsconfig.json](services/user/tsconfig.json)
 
 **Notes**
-- `services/user` ka `.env` abhi repo me add nahi dikh raha.
+- `services/user` ke liye `.env.example` add ho gaya hai, actual `.env` repo me nahi hai.  
+  [services/user/.env.example](services/user/.env.example)
 
 ---
 
@@ -176,6 +177,63 @@
 
 ---
 
+## Day 7 — Job Service Setup + DB Schema
+**Goal:** Job service ka base setup aur database schema initialize karna.
+
+**Highlights**
+- New `services/job` scaffold: config files, scripts, and env example.  
+  [services/job/package.json](services/job/package.json)  
+  [services/job/tsconfig.json](services/job/tsconfig.json)  
+  [services/job/.env.example](services/job/.env.example)
+- Job service ignore rules (node_modules, dist, .env) add kiye.  
+  [services/job/.gitignore](services/job/.gitignore)
+- Express app setup + base routing for `/api/job`.  
+  [services/job/src/app.ts](services/job/src/app.ts)
+- Job service DB init with enums and tables.  
+  [services/job/src/index.ts](services/job/src/index.ts)
+  - Enums: `job_type`, `work_location`, `application_status`
+  - Tables: `companies`, `jobs`, `applications`
+- Shared utilities added (db, TryCatch, error handler, file buffer helper).  
+  [services/job/src/utils/db.ts](services/job/src/utils/db.ts)  
+  [services/job/src/utils/TryCatch.ts](services/job/src/utils/TryCatch.ts)  
+  [services/job/src/utils/errorHandler.ts](services/job/src/utils/errorHandler.ts)  
+  [services/job/src/utils/buffer.ts](services/job/src/utils/buffer.ts)
+- Auth middleware and multer in-memory upload added.  
+  [services/job/src/middleware/auth.ts](services/job/src/middleware/auth.ts)  
+  [services/job/src/middleware/multer.ts](services/job/src/middleware/multer.ts)
+
+**Key Flows**
+- Service boot initializes DB schema before starting server.
+- Auth middleware validates JWT and attaches user context.
+
+---
+
+## Day 8 — Job + Company APIs (Job Service)
+**Goal:** Company and job management endpoints implement karna.
+
+**Highlights**
+- Company management endpoints (create, delete, list, details).  
+  [services/job/src/controllers/job.ts](services/job/src/controllers/job.ts)
+  - `createCompany()` recruiter-only with logo upload via utils service
+  - `deleteCompany()` recruiter-only delete (company ownership check)
+  - `getAllCompany()` lists recruiter companies
+  - `getCompanyDetails()` returns company with jobs via JSON aggregate
+- Job management endpoints (create, update, list, single).  
+  [services/job/src/controllers/job.ts](services/job/src/controllers/job.ts)
+  - `createJob()` recruiter-only, validates company ownership
+  - `updateJob()` recruiter-only, ownership validation
+  - `getAllActiveJobs()` public listing with title/location filters
+  - `getSingleJob()` fetch by job id
+- Job routes wired under `/api/job`.  
+  [services/job/src/routes/job.ts](services/job/src/routes/job.ts)
+
+**Key Flows**
+- **Create Company**: Logo upload → utils upload API → company insert
+- **Create Job**: Recruiter auth → company ownership check → job insert
+- **List Jobs**: Public search via query filters + active jobs only
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
@@ -208,6 +266,20 @@ Source: [services/utils/src/routes.ts](services/utils/src/routes.ts)
 
 Source: [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
 
+### Job Service (Base: `/api/job`)
+| Method | Endpoint | Description | Body/Params | Notes |
+| --- | --- | --- | --- | --- |
+| POST | /company/new | Create company | FormData + Header | Recruiter-only, logo file required |
+| DELETE | /company/:companyId | Delete company | URL param + Header | Recruiter-only, ownership required |
+| GET | /company/all | List recruiter companies | Header | Recruiter-only |
+| GET | /company/:id | Company details + jobs | URL param | Includes jobs array |
+| POST | /new | Create job | JSON + Header | Recruiter-only, company ownership required |
+| PUT | /:jobId | Update job | JSON + Header | Recruiter-only, ownership required |
+| GET | /all | List active jobs | Query params | Optional `title`, `location` filters |
+| GET | /:jobId | Get single job | URL param | Public |
+
+Source: [services/job/src/routes/job.ts](services/job/src/routes/job.ts)
+
 ---
 
 ## Setup/Run Steps
@@ -238,6 +310,14 @@ Source: [services/utils/package.json](services/utils/package.json)
 
 **Scripts**: `npm run build`, `npm run start`, `npm run dev`  
 Source: [services/user/package.json](services/user/package.json)
+
+### Job Service
+1. Create .env using [services/job/.env.example](services/job/.env.example).
+2. Install dependencies.
+3. Build and start.
+
+**Scripts**: `npm run build`, `npm run start`, `npm run dev`  
+Source: [services/job/package.json](services/job/package.json)
 
 ---
 
@@ -271,6 +351,18 @@ User Service (Express)
   v
 Utils Service (Express)
   |-- Cloudinary         [profile pic storage]
+
+Client
+  |
+  | HTTP /api/job/*
+  v
+Job Service (Express)
+  |-- PostgreSQL (Neon)  [companies, jobs, applications]
+  |
+  | HTTP /api/utils/upload
+  v
+Utils Service (Express)
+  |-- Cloudinary         [company logos]
 ```
 
 ---
@@ -304,7 +396,7 @@ Source: [services/utils/.env.example](services/utils/.env.example)
 | `SMTP_PASS` | SMTP password |
 
 ### User Service
-Source: runtime usage in code
+Source: [services/user/.env.example](services/user/.env.example)
 
 | Variable | Purpose |
 | --- | --- |
@@ -312,6 +404,16 @@ Source: runtime usage in code
 | `DB_URL` | Neon/Postgres connection string |
 | `JWT_SEC` | JWT secret key |
 | `UPLOAD_SERVICE` | Utils service base URL (for profile pic upload) |
+
+### Job Service
+Source: [services/job/.env.example](services/job/.env.example)
+
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | Service port |
+| `DB_URL` | Neon/Postgres connection string |
+| `UPLOAD_SERVICE` | Utils service base URL (for company logo upload) |
+| `JWT_SEC` | JWT secret key |
 
 ---
 
@@ -610,6 +712,183 @@ Content-Type: application/json
 ```
 {
   "message": "Skill Python deleted successfully"
+}
+```
+
+### Create Company (Job Service)
+**Request**
+```
+POST /api/job/company/new
+Authorization: Bearer <jwt>
+Content-Type: multipart/form-data
+
+Fields:
+  name=Acme Corp
+  description=Hiring platform for engineers
+  website=https://acme.example
+  file=<logo.png>
+```
+
+**Response**
+```
+{
+  "message": "Company created successfully",
+  "company": {
+    "company_id": 1,
+    "name": "Acme Corp",
+    "logo": "https://res.cloudinary.com/.../logo.png",
+    "logo_public_id": "company_logo_123"
+  }
+}
+```
+
+### Create Job (Job Service)
+**Request**
+```
+POST /api/job/new
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{
+  "title": "Frontend Engineer",
+  "description": "Build user-facing features",
+  "salary": 120000,
+  "location": "Bengaluru",
+  "job_type": "Full-time",
+  "openings": 2,
+  "role": "Frontend",
+  "work_location": "Hybrid",
+  "company_id": 1
+}
+```
+
+**Response**
+```
+{
+  "message": "Job created successfully",
+  "job": {
+    "job_id": 10,
+    "title": "Frontend Engineer",
+    "company_id": 1
+  }
+}
+```
+
+### Get Company Details (Job Service)
+**Request**
+```
+GET /api/job/company/1
+```
+
+**Response**
+```
+{
+  "company_id": 1,
+  "name": "Acme Corp",
+  "website": "https://acme.example",
+  "jobs": [
+    {
+      "job_id": 10,
+      "title": "Frontend Engineer"
+    }
+  ]
+}
+```
+
+### List Recruiter Companies (Job Service)
+**Request**
+```
+GET /api/job/company/all
+Authorization: Bearer <jwt>
+```
+
+**Response**
+```
+[
+  {
+    "company_id": 1,
+    "name": "Acme Corp",
+    "website": "https://acme.example"
+  }
+]
+```
+
+### List Active Jobs (Job Service)
+**Request**
+```
+GET /api/job/all?title=frontend&location=bengaluru
+```
+
+**Response**
+```
+[
+  {
+    "job_id": 10,
+    "title": "Frontend Engineer",
+    "company_name": "Acme Corp",
+    "location": "Bengaluru"
+  }
+]
+```
+
+### Get Single Job (Job Service)
+**Request**
+```
+GET /api/job/10
+```
+
+**Response**
+```
+{
+  "job_id": 10,
+  "title": "Frontend Engineer",
+  "company_id": 1
+}
+```
+
+### Update Job (Job Service)
+**Request**
+```
+PUT /api/job/10
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{
+  "title": "Frontend Engineer II",
+  "description": "Build user-facing features",
+  "salary": 140000,
+  "location": "Bengaluru",
+  "job_type": "Full-time",
+  "openings": 1,
+  "role": "Frontend",
+  "work_location": "Hybrid",
+  "company_id": 1,
+  "is_active": true
+}
+```
+
+**Response**
+```
+{
+  "message": "Job updated successfully",
+  "job": {
+    "job_id": 10,
+    "title": "Frontend Engineer II"
+  }
+}
+```
+
+### Delete Company (Job Service)
+**Request**
+```
+DELETE /api/job/company/1
+Authorization: Bearer <jwt>
+```
+
+**Response**
+```
+{
+  "message": "Company and all associated data deleted successfully"
 }
 ```
 

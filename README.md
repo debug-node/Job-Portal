@@ -9,6 +9,7 @@ Job Portal is a modern job marketplace platform with a microservices architectur
 - **Auth Service**: User authentication, registration, password management, and JWT-based security
 - **User Service**: User profile management and protected profile endpoint
 - **Utils Service**: Shared utilities including email notifications via Kafka and file uploads to Cloudinary
+- **Job Service**: Company and job management for recruiters and public job listings
 - **Frontend**: Client-side application (coming soon)
 
 ## 🏗️ Architecture
@@ -83,6 +84,25 @@ Job-Portal/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
+│   ├── job/                 # Job service
+│   │   ├── src/
+│   │   │   ├── app.ts       # Express app setup
+│   │   │   ├── index.ts     # Server entry point + DB init
+│   │   │   ├── controllers/
+│   │   │   │   └── job.ts   # Company + job logic
+│   │   │   ├── middleware/
+│   │   │   │   ├── auth.ts  # JWT auth middleware
+│   │   │   │   └── multer.ts
+│   │   │   ├── routes/
+│   │   │   │   └── job.ts   # Job endpoints
+│   │   │   └── utils/
+│   │   │       ├── buffer.ts
+│   │   │       ├── db.ts
+│   │   │       ├── errorHandler.ts
+│   │   │       └── TryCatch.ts
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
 │   └── package.json (if applicable)
 │
 ├── daily-documentation.md   # Development progress tracking
@@ -127,7 +147,13 @@ Job-Portal/
    npm install
    ```
 
-5. **Setup Environment Variables**
+5. **Install Job Service**
+   ```bash
+   cd services/job
+   npm install
+   ```
+
+6. **Setup Environment Variables**
    
    Create `.env` files in each service directory:
    
@@ -157,6 +183,14 @@ Job-Portal/
    UPLOAD_SERVICE=http://localhost:5001
    ```
 
+   **services/job/.env**
+   ```
+   PORT=5003
+   DB_URL=postgresql://...
+   JWT_SEC=your_jwt_secret
+   UPLOAD_SERVICE=http://localhost:5001
+   ```
+
 ### Running Services
 
 **Development Mode:**
@@ -176,6 +210,12 @@ npm run dev
 User Service:
 ```bash
 cd services/user
+npm run dev
+```
+
+Job Service:
+```bash
+cd services/job
 npm run dev
 ```
 
@@ -213,10 +253,16 @@ npm start
 - Add/remove user skills with transaction handling
 - Axios integration for inter-service communication (utils service)
 
+### Job Service
+- Recruiter-only company management
+- Recruiter-only job posting and updates
+- Public job listing with title/location filters
+- Company logo upload via utils service
+
 ### Database
 - PostgreSQL with Neon serverless
-- Tables: `users`, `skills`, `user_skills`
-- Enum: `user_role`
+- Tables: `users`, `skills`, `user_skills`, `companies`, `jobs`, `applications`
+- Enums: `user_role`, `job_type`, `work_location`, `application_status`
 
 ### Message Queue
 - Apache Kafka for async communication
@@ -239,6 +285,16 @@ npm start
 - `PUT /update/resume` - Update resume (requires file upload)
 - `POST /skill/add` - Add skill to user profile
 - `DELETE /skill/delete` - Remove skill from user profile
+
+### Job Routes (`/api/job`)
+- `POST /company/new` - Create company (recruiter-only, logo upload)
+- `DELETE /company/:companyId` - Delete company (recruiter-only)
+- `GET /company/all` - List recruiter companies (recruiter-only)
+- `GET /company/:id` - Get company details + jobs
+- `POST /new` - Create job (recruiter-only)
+- `PUT /:jobId` - Update job (recruiter-only)
+- `GET /all` - List active jobs (public, filters: `title`, `location`)
+- `GET /:jobId` - Get single job (public)
 
 ## 🔄 Service Communication
 
@@ -271,6 +327,12 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - `npm start` - Run compiled server
 - `npm test` - Run tests
 
+**Job Service:**
+- `npm run dev` - Start in development mode
+- `npm run build` - Compile TypeScript
+- `npm start` - Run compiled server
+- `npm test` - Run tests
+
 ## 📦 Dependencies Overview
 
 ### Auth Service
@@ -297,11 +359,20 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - Neon Serverless - Database connector
 - CORS 2.8.6 - Cross-Origin Resource Sharing
 
+### Job Service
+- Express 5.2.1 - Web framework
+- jsonwebtoken 9.0.3 - JWT token handling
+- Multer 2.0.2 - File upload handling
+- Axios 1.13.5 - HTTP client for inter-service calls
+- Neon Serverless - Database connector
+- CORS 2.8.6 - Cross-Origin Resource Sharing
+
 ## 🚧 Development Status
 
 - ✅ Auth Service - In Development
 - ✅ User Service - In Development
 - ✅ Utils Service - In Development
+- ✅ Job Service - In Development
 - 📱 Frontend - Not Started
 
 ## 📄 License
