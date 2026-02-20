@@ -1,5 +1,10 @@
 import express from "express";
-import { forgotPassword, loginUser, registerUser, resetPassword } from "../controllers/auth.js";
+import {
+	forgotPassword,
+	loginUser,
+	registerUser,
+	resetPassword,
+} from "../controllers/auth.js";
 import uploadFile from "../middleware/multer.js";
 
 const router = express.Router();

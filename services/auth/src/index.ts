@@ -3,19 +3,20 @@ dotenv.config();
 
 import app from "./app.js";
 import { sql } from "./utils/db.js";
-import { createClient } from "redis"
+import { createClient } from "redis";
 
 export const redisClient = createClient({
-    url: process.env.REDIS_URL
+	url: process.env.REDIS_URL,
 });
 
-redisClient.connect()
-    .then(() => console.log("✅ Connected to Redis"))
-    .catch(console.error);
+redisClient
+	.connect()
+	.then(() => console.log("✅ Connected to Redis"))
+	.catch(console.error);
 
 async function initDb() {
-    try {
-        await sql`
+	try {
+		await sql`
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
@@ -23,7 +24,7 @@ async function initDb() {
             END IF;
         END$$;
         `;
-        await sql`
+		await sql`
         CREATE TABLE IF NOT EXISTS users (
             user_id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
@@ -41,30 +42,31 @@ async function initDb() {
         );
         `;
 
-        await sql`
+		await sql`
         CREATE TABLE IF NOT EXISTS skills (
             skill_id SERIAL PRIMARY KEY,
             name VARCHAR(100) UNIQUE NOT NULL
         );
         `;
 
-        await sql`
+		await sql`
         CREATE TABLE IF NOT EXISTS user_skills (
             user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
             skill_id INTEGER NOT NULL REFERENCES skills(skill_id) ON DELETE CASCADE,
             PRIMARY KEY (user_id, skill_id)
         );
         `;
-        console.log("✅ Database initialized successfully");
-
-    } catch (error) {
-        console.log("❌ Error initializing database:", error);
-        process.exit(1);
-    }
+		console.log("✅ Database initialized successfully");
+	} catch (error) {
+		console.log("❌ Error initializing database:", error);
+		process.exit(1);
+	}
 }
 
 initDb().then(() => {
-    app.listen(process.env.PORT, () => {
-        console.log(`Auth service is running on http://localhost:${process.env.PORT}`);
-    });
+	app.listen(process.env.PORT, () => {
+		console.log(
+			`Auth service is running on http://localhost:${process.env.PORT}`,
+		);
+	});
 });

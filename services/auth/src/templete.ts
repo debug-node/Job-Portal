@@ -1,5 +1,5 @@
 export const forgotPasswordTemplate = (resetLink: string) => {
-    return `
+	return `
     <!DOCTYPE html>
     <html lang="en">
 
