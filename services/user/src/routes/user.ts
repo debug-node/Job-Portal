@@ -1,7 +1,15 @@
-import express from 'express';
-import { addSkillToUser, deleteSkillFromUser, getUserProfile, myProfile, updateProfilePic, updateResume, updateUserProfile } from '../controllers/user.js';
-import { isAuth } from '../middleware/auth.js';
-import uploadFile from '../middleware/multer.js';
+import express from "express";
+import {
+	addSkillToUser,
+	deleteSkillFromUser,
+	getUserProfile,
+	myProfile,
+	updateProfilePic,
+	updateResume,
+	updateUserProfile,
+} from "../controllers/user.js";
+import { isAuth } from "../middleware/auth.js";
+import uploadFile from "../middleware/multer.js";
 
 const router = express.Router();
 

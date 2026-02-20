@@ -1,5 +1,5 @@
-import { neon } from '@neondatabase/serverless';
-import dotenv from 'dotenv';
+import { neon } from "@neondatabase/serverless";
+import dotenv from "dotenv";
 
 dotenv.config();
 
