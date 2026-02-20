@@ -5,8 +5,8 @@ import { sql } from "./utils/db.js";
 dotenv.config();
 
 async function initDB() {
-  try {
-    await sql`
+	try {
+		await sql`
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'job_type')  THEN
@@ -24,7 +24,7 @@ async function initDB() {
             END$$;
         `;
 
-    await sql`
+		await sql`
             CREATE TABLE IF NOT EXISTS companies (
                 company_id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL UNIQUE,
@@ -37,7 +37,7 @@ async function initDB() {
             )
         `;
 
-    await sql`
+		await sql`
             CREATE TABLE IF NOT EXISTS jobs (
                 job_id SERIAL PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
@@ -55,7 +55,7 @@ async function initDB() {
             )
         `;
 
-    await sql`
+		await sql`
             CREATE TABLE IF NOT EXISTS applications (
                 application_id SERIAL PRIMARY KEY,
                 job_id INTEGER NOT NULL REFERENCES jobs(job_id) ON DELETE CASCADE,
@@ -69,18 +69,18 @@ async function initDB() {
             )
         `;
 
-    console.log("✅ Job service database initialized successfully");
-  } catch (error) {
-    console.error("Error initializing job service database tables:", error);
-    process.exit(1);
-  }
+		console.log("✅ Job service database initialized successfully");
+	} catch (error) {
+		console.error("Error initializing job service database tables:", error);
+		process.exit(1);
+	}
 }
 
 // Initialize the database tables before starting the server
 initDB().then(() => {
-  app.listen(process.env.PORT, () => {
-    console.log(
-      `Job service is running on http://localhost:${process.env.PORT}`,
-    );
-  });
+	app.listen(process.env.PORT, () => {
+		console.log(
+			`Job service is running on http://localhost:${process.env.PORT}`,
+		);
+	});
 });

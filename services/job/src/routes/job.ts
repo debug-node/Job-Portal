@@ -2,14 +2,14 @@ import express from "express";
 import { isAuth } from "../middleware/auth.js";
 import uploadFile from "../middleware/multer.js";
 import {
-  createCompany,
-  createJob,
-  deleteCompany,
-  getAllActiveJobs,
-  getAllCompany,
-  getCompanyDetails,
-  getSingleJob,
-  updateJob,
+	createCompany,
+	createJob,
+	deleteCompany,
+	getAllActiveJobs,
+	getAllCompany,
+	getCompanyDetails,
+	getSingleJob,
+	updateJob,
 } from "../controllers/job.js";
 
 const router = express.Router();

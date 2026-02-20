@@ -3,54 +3,54 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { sql } from "../utils/db.js";
 
 interface User {
-  user_id: number;
-  name: string;
-  email: string;
-  phone_number: string;
-  role: "jobseeker" | "recruiter";
-  bio: string | null;
-  resume: string | null;
-  resume_public_id: string | null;
-  profile_pic: string | null;
-  profile_pic_public_id: string | null;
-  skills: string[];
-  subscription: string | null;
+	user_id: number;
+	name: string;
+	email: string;
+	phone_number: string;
+	role: "jobseeker" | "recruiter";
+	bio: string | null;
+	resume: string | null;
+	resume_public_id: string | null;
+	profile_pic: string | null;
+	profile_pic_public_id: string | null;
+	skills: string[];
+	subscription: string | null;
 }
 
 export interface AuthenticatedRequest extends Request {
-  user?: User;
+	user?: User;
 }
 
 export const isAuth = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction,
+	req: AuthenticatedRequest,
+	res: Response,
+	next: NextFunction,
 ): Promise<void> => {
-  try {
-    const authHeader = req.headers.authorization;
+	try {
+		const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      res.status(401).json({
-        message: "Authorization header missing or malformed",
-      });
-      return;
-    }
+		if (!authHeader || !authHeader.startsWith("Bearer ")) {
+			res.status(401).json({
+				message: "Authorization header missing or malformed",
+			});
+			return;
+		}
 
-    const token = authHeader.split(" ")[1];
+		const token = authHeader.split(" ")[1];
 
-    const decodedPayload = jwt.verify(
-      token,
-      process.env.JWT_SEC as string,
-    ) as JwtPayload;
+		const decodedPayload = jwt.verify(
+			token,
+			process.env.JWT_SEC as string,
+		) as JwtPayload;
 
-    if (!decodedPayload || !decodedPayload.id) {
-      res.status(401).json({
-        message: "Invalid Token",
-      });
-      return;
-    }
+		if (!decodedPayload || !decodedPayload.id) {
+			res.status(401).json({
+				message: "Invalid Token",
+			});
+			return;
+		}
 
-    const users = await sql`
+		const users = await sql`
         SELECT 
             u.user_id,
             u.name,
@@ -70,24 +70,24 @@ export const isAuth = async (
             GROUP BY u.user_id;
         `;
 
-    if (users.length === 0) {
-      res.status(401).json({
-        message: "User associated with this token no longer exists",
-      });
-      return;
-    }
+		if (users.length === 0) {
+			res.status(401).json({
+				message: "User associated with this token no longer exists",
+			});
+			return;
+		}
 
-    const user = users[0] as User;
+		const user = users[0] as User;
 
-    user.skills = user.skills || [];
+		user.skills = user.skills || [];
 
-    req.user = user;
+		req.user = user;
 
-    next();
-  } catch (error) {
-    console.log(error);
-    res.status(401).json({
-      message: "Authentication failed. Please login again.",
-    });
-  }
+		next();
+	} catch (error) {
+		console.log(error);
+		res.status(401).json({
+			message: "Authentication failed. Please login again.",
+		});
+	}
 };
