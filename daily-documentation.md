@@ -285,6 +285,28 @@
 
 ---
 
+## Day 11 — AI Career Guidance + Resume ATS Analysis (Utils Service)
+**Goal:** Utils service me Gemini AI based career and resume analysis endpoints add karna.
+
+**Highlights**
+- Utils service dependencies me Gemini SDK add kiya.  
+  [services/utils/package.json](services/utils/package.json)
+  - Added: `@google/genai`
+- Utils env example me Gemini API key variable add hua.  
+  [services/utils/.env.example](services/utils/.env.example)
+  - Added: `API_KEY_GEMINI`
+- Utils routes me AI endpoints implement kiye.  
+  [services/utils/src/routes.ts](services/utils/src/routes.ts)
+  - `POST /career` for skill-based career roadmap response in JSON
+  - `POST /resume-analyser` for ATS score + suggestions from resume PDF
+  - Response sanitization/parsing logic to convert AI output into strict JSON
+
+**Key Flows**
+- **Career Guidance**: Skills input -> Gemini prompt -> structured JSON parse -> career path response.
+- **Resume Analysis**: PDF base64 input -> Gemini multimodal request -> ATS JSON response (score + improvements).
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
@@ -301,6 +323,8 @@ Source: [services/auth/src/routes/auth.ts](services/auth/src/routes/auth.ts)
 | Method | Endpoint | Description | Body | Notes |
 | --- | --- | --- | --- | --- |
 | POST | /upload | Upload/replace file | JSON | If `public_id` present, old file is deleted |
+| POST | /career | AI career suggestion | JSON | Body: `{ skills: "..." }`, returns structured career roadmap |
+| POST | /resume-analyser | AI ATS resume analysis | JSON | Body: `{ pdfBase64: "..." }`, returns score + suggestions |
 
 Source: [services/utils/src/routes.ts](services/utils/src/routes.ts)
 
@@ -394,6 +418,7 @@ Utils Service (Express)
   |-- Cloudinary         [file storage]
   |-- Kafka Consumer     [send-mail]
   |-- SMTP (Nodemailer)  [email dispatch]
+  |-- Gemini API         [career guidance + ATS analysis]
 
 Client
   |
@@ -406,6 +431,7 @@ User Service (Express)
   v
 Utils Service (Express)
   |-- Cloudinary         [profile pic storage]
+  |-- Gemini API         [career guidance + ATS analysis]
 
 Client
   |
@@ -421,6 +447,7 @@ Utils Service (Express)
   |-- Cloudinary         [company logos]
   |-- Kafka Consumer     [send-mail]
   |-- SMTP (Nodemailer)  [status update email]
+  |-- Gemini API         [career guidance + ATS analysis]
 ```
 
 ---
@@ -452,6 +479,7 @@ Source: [services/utils/.env.example](services/utils/.env.example)
 | `KAFKA_BROKER` | Kafka broker address (code uses `KAFKA_BROKER`) |
 | `SMTP_USER` | SMTP user email |
 | `SMTP_PASS` | SMTP password |
+| `API_KEY_GEMINI` | Gemini API key for AI endpoints |
 
 ### User Service
 Source: [services/user/.env.example](services/user/.env.example)
@@ -606,6 +634,81 @@ Content-Type: application/json
 {
   "url": "https://res.cloudinary.com/.../file.pdf",
   "public_id": "abc123"
+}
+```
+
+### Career Guidance (Utils Service)
+**Request**
+```
+POST /api/utils/career
+Content-Type: application/json
+
+{
+  "skills": "React, Node.js, TypeScript, PostgreSQL"
+}
+```
+
+**Response**
+```
+{
+  "summary": "You are well-suited for modern full-stack product development roles.",
+  "jobOptions": [
+    {
+      "title": "Full Stack Developer",
+      "responsibilities": "Build and maintain frontend and backend features.",
+      "why": "Your current stack aligns with production full-stack requirements."
+    }
+  ],
+  "skillsToLearn": [
+    {
+      "category": "DevOps & Cloud",
+      "skills": [
+        {
+          "title": "Docker",
+          "why": "Helps with consistent deployment across environments.",
+          "how": "Containerize a Node + Postgres project and deploy it."
+        }
+      ]
+    }
+  ],
+  "learningApproach": {
+    "title": "How to Approach Learning",
+    "points": ["Build projects", "Follow roadmap", "Practice interviews"]
+  }
+}
+```
+
+### Resume Analyser (Utils Service)
+**Request**
+```
+POST /api/utils/resume-analyser
+Content-Type: application/json
+
+{
+  "pdfBase64": "data:application/pdf;base64,JVBERi0xLjQK..."
+}
+```
+
+**Response**
+```
+{
+  "atsScore": 82,
+  "scoreBreakdown": {
+    "formatting": { "score": 85, "feedback": "Formatting is mostly ATS-friendly." },
+    "keywords": { "score": 78, "feedback": "Add more role-specific keywords." },
+    "structure": { "score": 84, "feedback": "Sections are well organized." },
+    "readability": { "score": 81, "feedback": "Use more measurable outcomes." }
+  },
+  "suggestions": [
+    {
+      "category": "Keywords",
+      "issue": "Missing exact job keywords",
+      "recommendation": "Mirror target JD keywords in skills and experience",
+      "priority": "high"
+    }
+  ],
+  "strengths": ["Clear section structure", "Relevant project experience"],
+  "summary": "Resume is solid and can improve further with stronger keyword matching."
 }
 ```
 
@@ -1047,12 +1150,13 @@ Content-Type: application/json
 ---
 
 ## Tech Stack Summary
-- **Node.js + Express + TypeScript**
-- **PostgreSQL (Neon)**
-- **Redis**
-- **Kafka (kafkajs)**
-- **Cloudinary**
-- **Nodemailer**
-- **Multer + DataURI**
-- **JWT + bcrypt**
-- **Axios** (HTTP client for inter-service communication)
+- **Node.js + Express + TypeScript** (`express`, `typescript`)
+- **PostgreSQL (Neon)** (`@neondatabase/serverless`)
+- **Redis** (`redis`)
+- **Kafka** (`kafkajs`)
+- **Cloudinary** (`cloudinary`)
+- **Google Gemini API** (`@google/genai`)
+- **Nodemailer** (`nodemailer`)
+- **Multer + DataURI** (`multer`, `datauri`)
+- **JWT + bcrypt** (`jsonwebtoken`, `bcrypt`)
+- **Axios** (`axios`) - HTTP client for inter-service communication
