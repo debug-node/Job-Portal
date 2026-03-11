@@ -88,6 +88,8 @@ Job-Portal/
 │   │   ├── src/
 │   │   │   ├── app.ts       # Express app setup
 │   │   │   ├── index.ts     # Server entry point + DB init
+│   │   │   ├── producer.ts  # Kafka producer
+│   │   │   ├── template.ts  # Email templates
 │   │   │   ├── controllers/
 │   │   │   │   └── job.ts   # Company + job logic
 │   │   │   ├── middleware/
@@ -189,6 +191,7 @@ Job-Portal/
    DB_URL=postgresql://...
    JWT_SEC=your_jwt_secret
    UPLOAD_SERVICE=http://localhost:5001
+   KAFKA_BROKER=localhost:9092
    ```
 
 ### Running Services
@@ -251,6 +254,8 @@ npm start
 - Update profile picture with file upload
 - Update resume with file upload
 - Add/remove user skills with transaction handling
+- Apply to jobs (jobseeker only)
+- View all applied jobs with job details
 - Axios integration for inter-service communication (utils service)
 
 ### Job Service
@@ -258,6 +263,8 @@ npm start
 - Recruiter-only job posting and updates
 - Public job listing with title/location filters
 - Company logo upload via utils service
+- Recruiter-side application listing per job
+- Recruiter-side application status updates with email notification trigger
 
 ### Database
 - PostgreSQL with Neon serverless
@@ -273,8 +280,8 @@ npm start
 ### Auth Routes (`/api/auth`)
 - `POST /register` - User registration
 - `POST /login` - User login
-- `POST /forgot-password` - Request password reset
-- `POST /reset-password` - Reset password
+- `POST /forgot` - Request password reset
+- `POST /reset/:token` - Reset password
 - File upload endpoints for profile management
 
 ### User Routes (`/api/user`)
@@ -285,6 +292,8 @@ npm start
 - `PUT /update/resume` - Update resume (requires file upload)
 - `POST /skill/add` - Add skill to user profile
 - `DELETE /skill/delete` - Remove skill from user profile
+- `POST /apply/job` - Apply for a job (jobseeker-only)
+- `GET /application/all` - Get logged-in user's applications
 
 ### Job Routes (`/api/job`)
 - `POST /company/new` - Create company (recruiter-only, logo upload)
@@ -294,12 +303,14 @@ npm start
 - `POST /new` - Create job (recruiter-only)
 - `PUT /:jobId` - Update job (recruiter-only)
 - `GET /all` - List active jobs (public, filters: `title`, `location`)
+- `GET /application/:jobId` - Get all applications for a job (recruiter-only)
+- `PUT /application/update/:id` - Update application status (recruiter-only)
 - `GET /:jobId` - Get single job (public)
 
 ## 🔄 Service Communication
 
 The microservices communicate via:
-- **Kafka**: Async event-driven messaging (e.g., send-mail events)
+- **Kafka**: Async event-driven messaging (e.g., send-mail events from auth and job services)
 - **HTTP/REST**: Synchronous service-to-service calls via Axios
 - **Redis**: Caching and temporary token storage
 
@@ -364,6 +375,7 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - jsonwebtoken 9.0.3 - JWT token handling
 - Multer 2.0.2 - File upload handling
 - Axios 1.13.5 - HTTP client for inter-service calls
+- Kafka.js 2.2.4 - Kafka producer for mail events
 - Neon Serverless - Database connector
 - CORS 2.8.6 - Cross-Origin Resource Sharing
 
