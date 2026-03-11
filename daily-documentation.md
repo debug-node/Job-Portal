@@ -234,6 +234,57 @@
 
 ---
 
+## Day 9 — Job Application Flow (User Service)
+**Goal:** Jobseeker side se job apply karna aur apni applications dekhna.
+
+**Highlights**
+- User controller me job application features add kiye.  
+  [services/user/src/controllers/user.ts](services/user/src/controllers/user.ts)
+  - `applyForJob()` added with jobseeker-only guard
+  - Resume-required validation before applying
+  - Duplicate application handling (`23505` unique violation -> 409)
+  - Subscription-based priority flag (`subscribed`) set at apply time
+  - `getAllaplications()` added to list current user's applications with job details
+- New user routes add kiye.  
+  [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
+  - `POST /apply/job`
+  - `GET /application/all`
+
+**Key Flows**
+- **Apply Job**: JWT auth -> role check (`jobseeker`) -> resume presence check -> job active check -> application insert.
+- **List My Applications**: Authenticated user -> join `applications` + `jobs` -> all own applications return.
+
+---
+
+## Day 10 — Recruiter Application Management + Kafka Mail (Job Service)
+**Goal:** Recruiter ko job applications manage karne aur status update par email trigger karne ka flow.
+
+**Highlights**
+- Job service me Kafka producer setup add kiya.  
+  [services/job/src/producer.ts](services/job/src/producer.ts)
+  - `connectKafka()` with `send-mail` topic ensure
+  - `publishToTopic()` helper for async mail events
+- Job service startup me Kafka connection initialize kiya.  
+  [services/job/src/index.ts](services/job/src/index.ts)
+- Application status mail template add kiya.  
+  [services/job/src/template.ts](services/job/src/template.ts)
+- Recruiter-side application APIs add kiye in job controller.  
+  [services/job/src/controllers/job.ts](services/job/src/controllers/job.ts)
+  - `getAllApplicationForJob()` recruiter-only + ownership check
+  - `updateApplication()` recruiter-only status update + Kafka `send-mail` publish
+- New job routes add kiye for application management.  
+  [services/job/src/routes/job.ts](services/job/src/routes/job.ts)
+  - `GET /application/:jobId`
+  - `PUT /application/update/:id`
+- Job service env example me Kafka broker variable add hua.  
+  [services/job/.env.example](services/job/.env.example)
+
+**Key Flows**
+- **Recruiter View Applications**: Recruiter auth -> job ownership verify -> applications sorted by `subscribed DESC, applied_at ASC`.
+- **Update Application Status**: Recruiter auth -> ownership verify -> status update -> Kafka event publish -> utils service sends email.
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
@@ -263,6 +314,8 @@ Source: [services/utils/src/routes.ts](services/utils/src/routes.ts)
 | PUT | /update/resume | Update resume | FormData + Header | Requires file upload via multer |
 | POST | /skill/add | Add skill to user | JSON + Header | Body: `{ skillName: "..." }` |
 | DELETE | /skill/delete | Remove skill from user | JSON + Header | Body: `{ skillName: "..." }` |
+| POST | /apply/job | Apply for a job | JSON + Header | Jobseeker-only, requires uploaded resume |
+| GET | /application/all | Get my applications | Header | Returns applicant's applied jobs list |
 
 Source: [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
 
@@ -277,6 +330,8 @@ Source: [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
 | PUT | /:jobId | Update job | JSON + Header | Recruiter-only, ownership required |
 | GET | /all | List active jobs | Query params | Optional `title`, `location` filters |
 | GET | /:jobId | Get single job | URL param | Public |
+| GET | /application/:jobId | Get applications for a job | URL param + Header | Recruiter-only, job ownership required |
+| PUT | /application/update/:id | Update application status | URL param + JSON + Header | Recruiter-only, triggers status email |
 
 Source: [services/job/src/routes/job.ts](services/job/src/routes/job.ts)
 
@@ -358,11 +413,14 @@ Client
   v
 Job Service (Express)
   |-- PostgreSQL (Neon)  [companies, jobs, applications]
+  |-- Kafka Producer     [send-mail on application status update]
   |
   | HTTP /api/utils/upload
   v
 Utils Service (Express)
   |-- Cloudinary         [company logos]
+  |-- Kafka Consumer     [send-mail]
+  |-- SMTP (Nodemailer)  [status update email]
 ```
 
 ---
@@ -414,6 +472,7 @@ Source: [services/job/.env.example](services/job/.env.example)
 | `DB_URL` | Neon/Postgres connection string |
 | `UPLOAD_SERVICE` | Utils service base URL (for company logo upload) |
 | `JWT_SEC` | JWT secret key |
+| `KAFKA_BROKER` | Kafka broker address |
 
 ---
 
@@ -889,6 +948,99 @@ Authorization: Bearer <jwt>
 ```
 {
   "message": "Company and all associated data deleted successfully"
+}
+```
+
+### Apply for Job (User Service)
+**Request**
+```
+POST /api/user/apply/job
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{
+  "job_id": 10
+}
+```
+
+**Response**
+```
+{
+  "message": "Application submitted successfully",
+  "application": {
+    "application_id": 21,
+    "job_id": 10,
+    "applicant_id": 2,
+    "status": "Submitted"
+  }
+}
+```
+
+### Get My Applications (User Service)
+**Request**
+```
+GET /api/user/application/all
+Authorization: Bearer <jwt>
+```
+
+**Response**
+```
+[
+  {
+    "application_id": 21,
+    "job_id": 10,
+    "status": "Submitted",
+    "job_title": "Frontend Engineer",
+    "job_salary": 120000,
+    "job_location": "Bengaluru"
+  }
+]
+```
+
+### Get Applications For Job (Job Service)
+**Request**
+```
+GET /api/job/application/10
+Authorization: Bearer <jwt>
+```
+
+**Response**
+```
+[
+  {
+    "application_id": 21,
+    "job_id": 10,
+    "applicant_id": 2,
+    "applicant_email": "rahul@example.com",
+    "status": "Submitted",
+    "subscribed": true
+  }
+]
+```
+
+### Update Application Status (Job Service)
+**Request**
+```
+PUT /api/job/application/update/21
+Authorization: Bearer <jwt>
+Content-Type: application/json
+
+{
+  "status": "Hired"
+}
+```
+
+**Response**
+```
+{
+  "message": "Application status updated successfully",
+  "job": {
+    "title": "Frontend Engineer"
+  },
+  "updatedApplication": {
+    "application_id": 21,
+    "status": "Hired"
+  }
 }
 ```
 
