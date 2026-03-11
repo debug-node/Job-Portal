@@ -4,96 +4,87 @@ import getBuffer from "../utils/buffer.js";
 import { sql } from "../utils/db.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/TryCatch.js";
+import { applicationStatusUpdateTemplate } from "../template.js";
+import { publishToTopic } from "../producer.js";
 
-export const createCompany = TryCatch(
-	async (req: AuthenticatedRequest, res) => {
-		const user = req.user;
+export const createCompany = TryCatch(async (req: AuthenticatedRequest, res) => {
+	const user = req.user;
 
-		if (!user) {
-			throw new ErrorHandler(401, "Authentication required");
-		}
+	if (!user) {
+		throw new ErrorHandler(401, "Authentication required");
+	}
 
-		if (user.role !== "recruiter") {
-			throw new ErrorHandler(
-				403,
-				"Forbidden: Only recruiters can create companies",
-			);
-		}
+	if (user.role !== "recruiter") {
+		throw new ErrorHandler(403, "Forbidden: Only recruiters can create companies");
+	}
 
-		const { name, description, website } = req.body;
+	const { name, description, website } = req.body;
 
-		if (!name || !description || !website) {
-			throw new ErrorHandler(
-				400,
-				"All the fields (name, description, website) required",
-			);
-		}
-
-		const existingCompanies =
-			await sql`SELECT company_id FROM companies WHERE name = ${name}`;
-
-		if (existingCompanies.length > 0) {
-			throw new ErrorHandler(
-				409,
-				`Company with this name ${name} already exists`,
-			);
-		}
-
-		const file = req.file;
-
-		if (!file) {
-			throw new ErrorHandler(400, "Company logo is required");
-		}
-
-		const fileBuffer = getBuffer(file);
-
-		if (!fileBuffer || !fileBuffer.content) {
-			throw new ErrorHandler(500, "Failed to process the uploaded file");
-		}
-
-		const { data } = await axios.post(
-			`${process.env.UPLOAD_SERVICE}/api/utils/upload`,
-			{ buffer: fileBuffer.content },
+	if (!name || !description || !website) {
+		throw new ErrorHandler(
+			400,
+			"All the fields (name, description, website) required",
 		);
+	}
 
-		const [newCompany] = await sql`
+	const existingCompanies =
+		await sql`SELECT company_id FROM companies WHERE name = ${name}`;
+
+	if (existingCompanies.length > 0) {
+		throw new ErrorHandler(409, `Company with this name ${name} already exists`);
+	}
+
+	const file = req.file;
+
+	if (!file) {
+		throw new ErrorHandler(400, "Company logo is required");
+	}
+
+	const fileBuffer = getBuffer(file);
+
+	if (!fileBuffer || !fileBuffer.content) {
+		throw new ErrorHandler(500, "Failed to process the uploaded file");
+	}
+
+	const { data } = await axios.post(`${process.env.UPLOAD_SERVICE}/api/utils/upload`, {
+		buffer: fileBuffer.content,
+	});
+
+	const [newCompany] = await sql`
         INSERT INTO companies (name, description, website, logo, logo_public_id, recruiter_id)
         VALUES (${name}, ${description}, ${website}, ${data.url}, ${data.public_id}, ${req.user?.user_id}) RETURNING *
     `;
 
-		res.json({
-			message: "Company created successfully",
-			company: newCompany,
-		});
-	},
-);
+	res.json({
+		message: "Company created successfully",
+		company: newCompany,
+	});
+});
 
-export const deleteCompany = TryCatch(
-	async (req: AuthenticatedRequest, res) => {
-		const user = req.user;
+export const deleteCompany = TryCatch(async (req: AuthenticatedRequest, res) => {
+	const user = req.user;
 
-		const { companyId } = req.params;
+	const { companyId } = req.params;
 
-		const [company] = await sql`
+	const [company] = await sql`
         SELECT logo_public_id FROM companies WHERE company_id = ${companyId} AND recruiter_id = ${user?.user_id}
     `;
 
-		if (!company) {
-			throw new ErrorHandler(
-				404,
-				"Company not found or you don't have authorized to delete this company",
-			);
-		}
+	if (!company) {
+		throw new ErrorHandler(
+			404,
+			"Company not found or you don't have authorized to delete this company",
+		);
+	}
 
-		await sql`
+	await sql`
         DELETE FROM companies WHERE company_id = ${companyId}
     `;
 
-		res.json({
-			message: "Company and all associated data deleted successfully",
-		});
-	},
-);
+	res.json({
+		message: "Company and all associated data deleted successfully",
+	});
+});
 
 export const createJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 	const user = req.user;
@@ -103,10 +94,7 @@ export const createJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 	}
 
 	if (user.role !== "recruiter") {
-		throw new ErrorHandler(
-			403,
-			"Forbidden: Only recruiters can create jobs",
-		);
+		throw new ErrorHandler(403, "Forbidden: Only recruiters can create jobs");
 	}
 
 	const {
@@ -155,10 +143,7 @@ export const updateJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 	}
 
 	if (user.role !== "recruiter") {
-		throw new ErrorHandler(
-			403,
-			"Forbidden: Only recruiters can create jobs",
-		);
+		throw new ErrorHandler(403, "Forbidden: Only recruiters can create jobs");
 	}
 
 	const {
@@ -209,25 +194,22 @@ export const updateJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 	});
 });
 
-export const getAllCompany = TryCatch(
-	async (req: AuthenticatedRequest, res) => {
-		const companies = await sql`
+export const getAllCompany = TryCatch(async (req: AuthenticatedRequest, res) => {
+	const companies = await sql`
         SELECT * FROM companies WHERE recruiter_id = ${req.user?.user_id}
     `;
 
-		res.json(companies);
-	},
-);
+	res.json(companies);
+});
 
-export const getCompanyDetails = TryCatch(
-	async (req: AuthenticatedRequest, res) => {
-		const { id } = req.params;
+export const getCompanyDetails = TryCatch(async (req: AuthenticatedRequest, res) => {
+	const { id } = req.params;
 
-		if (!id) {
-			throw new ErrorHandler(400, "Company ID is required");
-		}
+	if (!id) {
+		throw new ErrorHandler(400, "Company ID is required");
+	}
 
-		const [companyData] = await sql`
+	const [companyData] = await sql`
         SELECT c.*, COALESCE(
             (
                 SELECT json_agg(j.*) FROM jobs j WHERE j.company_id = c.company_id
@@ -237,13 +219,12 @@ export const getCompanyDetails = TryCatch(
         FROM companies c WHERE c.company_id = ${id} GROUP BY c.company_id;
     `;
 
-		if (!companyData) {
-			throw new ErrorHandler(404, "Company not found");
-		}
+	if (!companyData) {
+		throw new ErrorHandler(404, "Company not found");
+	}
 
-		res.json(companyData);
-	},
-);
+	res.json(companyData);
+});
 
 export const getAllActiveJobs = TryCatch(async (req, res) => {
 	const { title, location } = req.query as {
@@ -288,4 +269,99 @@ export const getSingleJob = TryCatch(async (req, res) => {
   `;
 
 	res.json(job);
+});
+
+export const getAllApplicationForJob = TryCatch(
+	async (req: AuthenticatedRequest, res) => {
+		const user = req.user;
+		if (!user) {
+			throw new ErrorHandler(401, "Authentication required");
+		}
+
+		if (user.role !== "recruiter") {
+			throw new ErrorHandler(
+				403,
+				"Forbidden: Only recruiters can view applications",
+			);
+		}
+
+		const { jobId } = req.params;
+
+		const [job] = await sql`
+		SELECT posted_by_recruiter_id FROM jobs WHERE job_id = ${jobId}
+	`;
+
+		if (!job) {
+			throw new ErrorHandler(404, "Job not found");
+		}
+
+		if (job.posted_by_recruiter_id !== user.user_id) {
+			throw new ErrorHandler(
+				403,
+				"Forbidden: You don't have authorized to view applications for this job",
+			);
+		}
+
+		const applications =
+			await sql`SELECT * FROM applications WHERE job_id = ${jobId} ORDER BY subscribed DESC, applied_at ASC`;
+
+		res.json(applications);
+	},
+);
+
+export const updateApplication = TryCatch(async (req: AuthenticatedRequest, res) => {
+	const user = req.user;
+	if (!user) {
+		throw new ErrorHandler(401, "Authentication required");
+	}
+
+	if (user.role !== "recruiter") {
+		throw new ErrorHandler(
+			403,
+			"Forbidden: Only recruiters can update application status",
+		);
+	}
+
+	const { id } = req.params;
+
+	const [application] =
+		await sql`SELECT * FROM applications WHERE application_id = ${id}`;
+
+	if (!application) {
+		throw new ErrorHandler(404, "Application not found");
+	}
+
+	const [job] =
+		await sql`SELECT posted_by_recruiter_id, title FROM jobs WHERE job_id = ${application.job_id}`;
+
+	if (!job) {
+		throw new ErrorHandler(404, "Associated job not found");
+	}
+
+	if (job.posted_by_recruiter_id !== user.user_id) {
+		throw new ErrorHandler(
+			403,
+			"Forbidden: You don't have authorized to update status for this application",
+		);
+	}
+
+	const [updatedApplication] = await sql`
+			UPDATE applications SET status = ${req.body.status} WHERE application_id = ${id} RETURNING *;
+		`;
+
+	const message = {
+		to: application.applicant_email,
+		subject: "Application Update - Job portal",
+		html: applicationStatusUpdateTemplate(job.title),
+	};
+
+	publishToTopic("send-mail", message).catch((error) => {
+		console.error("Failed to publish message to Kafka topic:", error);
+	});
+
+	res.json({
+		message: "Application status updated successfully",
+		job,
+		updatedApplication,
+	});
 });
