@@ -8,7 +8,7 @@ Job Portal is a modern job marketplace platform with a microservices architectur
 
 - **Auth Service**: User authentication, registration, password management, and JWT-based security
 - **User Service**: User profile management and protected profile endpoint
-- **Utils Service**: Shared utilities including email notifications via Kafka and file uploads to Cloudinary
+- **Utils Service**: Shared utilities including email notifications, file uploads, and AI-based career/resume analysis
 - **Job Service**: Company and job management for recruiters and public job listings
 - **Frontend**: Client-side application (coming soon)
 
@@ -175,6 +175,7 @@ Job-Portal/
    API_SECRET=...
    SMTP_USER=...
    SMTP_PASS=...
+   API_KEY_GEMINI=...
    ```
 
    **services/user/.env**
@@ -245,6 +246,8 @@ npm start
 - Nodemailer email dispatch
 - Cloudinary file storage
 - Email template system
+- AI career guidance from skill input
+- AI resume ATS analysis from PDF base64 input
 
 ### User Service
 - JWT-protected profile endpoints
@@ -276,6 +279,11 @@ npm start
 - Topics: `send-mail` (event-driven email notifications)
 
 ## 📝 API Endpoints
+
+### Utils Routes (`/api/utils`)
+- `POST /upload` - Upload/replace file
+- `POST /career` - Generate AI career path from skills
+- `POST /resume-analyser` - Analyze ATS score and improvement suggestions
 
 ### Auth Routes (`/api/auth`)
 - `POST /register` - User registration
@@ -312,6 +320,7 @@ npm start
 The microservices communicate via:
 - **Kafka**: Async event-driven messaging (e.g., send-mail events from auth and job services)
 - **HTTP/REST**: Synchronous service-to-service calls via Axios
+- **External AI API**: Utils service calls Gemini for career and ATS analysis
 - **Redis**: Caching and temporary token storage
 
 ## 📚 Documentation
@@ -359,6 +368,7 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - Express 5.2.1 - Web framework
 - Kafka.js 2.2.4 - Kafka consumer
 - Cloudinary 2.8.0 - File storage
+- @google/genai 1.44.0 - Gemini AI integration
 - Nodemailer 7.0.12 - Email service
 - CORS 2.8.5 - Cross-Origin Resource Sharing
 
