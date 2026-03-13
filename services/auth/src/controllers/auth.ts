@@ -16,8 +16,7 @@ export const registerUser = TryCatch(async (req, res, next) => {
 		throw new ErrorHandler(400, "All fields are required");
 	}
 
-	const existingUsers =
-		await sql`SELECT user_id FROM users WHERE email = ${email}`;
+	const existingUsers = await sql`SELECT user_id FROM users WHERE email = ${email}`;
 
 	if (existingUsers.length > 0) {
 		throw new ErrorHandler(409, "User with this email already exists");
@@ -36,10 +35,7 @@ export const registerUser = TryCatch(async (req, res, next) => {
 		const file = req.file;
 
 		if (!file) {
-			throw new ErrorHandler(
-				400,
-				"Resume file is required for jobseekers",
-			);
+			throw new ErrorHandler(400, "Resume file is required for jobseekers");
 		}
 
 		const fileBuffer = getBuffer(file);
@@ -101,13 +97,9 @@ export const loginUser = TryCatch(async (req, res, next) => {
 
 	delete userObject.password;
 
-	const token = jwt.sign(
-		{ id: userObject?.user_id },
-		process.env.JWT_SEC as string,
-		{
-			expiresIn: "15d",
-		},
-	);
+	const token = jwt.sign({ id: userObject?.user_id }, process.env.JWT_SEC as string, {
+		expiresIn: "15d",
+	});
 
 	res.json({
 		message: "User logged in successfully",
@@ -122,8 +114,7 @@ export const forgotPassword = TryCatch(async (req, res, next) => {
 		throw new ErrorHandler(400, "Email is required");
 	}
 
-	const users =
-		await sql`SELECT user_id,email FROM users WHERE email = ${email}`;
+	const users = await sql`SELECT user_id,email FROM users WHERE email = ${email}`;
 
 	if (users.length === 0) {
 		return res.json({
@@ -158,14 +149,18 @@ export const forgotPassword = TryCatch(async (req, res, next) => {
 	});
 
 	res.json({
-		message:
-			"If a user with that email exists, a password reset link has been sent",
+		message: "If a user with that email exists, a password reset link has been sent",
 	});
 });
 
 export const resetPassword = TryCatch(async (req, res, next) => {
-	const { token } = req.params;
+	const rawToken = req.params.token;
+	const token = Array.isArray(rawToken) ? rawToken[0] : rawToken;
 	const { password } = req.body;
+
+	if (!token) {
+		throw new ErrorHandler(400, "invalid token");
+	}
 
 	let decoded: any;
 
