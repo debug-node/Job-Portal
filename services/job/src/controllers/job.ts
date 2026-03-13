@@ -351,7 +351,7 @@ export const updateApplication = TryCatch(async (req: AuthenticatedRequest, res)
 
 	const message = {
 		to: application.applicant_email,
-		subject: "Application Update - Job portal",
+		subject: "Application Update - Hireheaven",
 		html: applicationStatusUpdateTemplate(job.title),
 	};
 
