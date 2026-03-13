@@ -307,6 +307,67 @@
 
 ---
 
+## Day 12 — Frontend Project Initialization (Next.js + shadcn/ui)
+**Goal:** Job portal ka frontend project scaffold karna Next.js ke saath, theming aur UI component library setup karna.
+
+**Highlights**
+- Next.js 16.1.6 app created with TypeScript (`React 19.2.3`).  
+  [frontend/package.json](frontend/package.json)
+- Tailwind CSS v4 configured with `@tailwindcss/postcss`.  
+  [frontend/postcss.config.mjs](frontend/postcss.config.mjs)
+- shadcn/ui initialized — base component library using `radix-ui`, `clsx`, `class-variance-authority`, `tailwind-merge`.
+- `next-themes` added for light/dark/system theme support.
+- Global CSS setup with CSS variables (oklch color tokens) for light and dark modes.  
+  [frontend/src/app/globals.css](frontend/src/app/globals.css)
+- Utility function `cn()` created in `src/lib/utils.ts` (clsx + twMerge).  
+  [frontend/src/lib/utils.ts](frontend/src/lib/utils.ts)
+- `ThemeProvider` wrapper component created using `next-themes`.  
+  [frontend/src/components/theme-provider.tsx](frontend/src/components/theme-provider.tsx)
+- `ModeToggle` component created — dropdown with Light / Dark / System options.  
+  [frontend/src/components/mode-toggle.tsx](frontend/src/components/mode-toggle.tsx)
+- shadcn UI components added via CLI:
+  - `Button` — variants: default, outline, secondary, ghost, destructive, link | sizes: default, sm, lg, icon, icon-sm, icon-lg, xs  
+    [frontend/src/components/ui/button.tsx](frontend/src/components/ui/button.tsx)
+  - `Avatar`, `AvatarImage`, `AvatarFallback`, `AvatarGroup`, `AvatarBadge`  
+    [frontend/src/components/ui/avatar.tsx](frontend/src/components/ui/avatar.tsx)
+  - `Popover`, `PopoverContent`, `PopoverTrigger`, `PopoverHeader`, `PopoverTitle`, `PopoverDescription`  
+    [frontend/src/components/ui/popover.tsx](frontend/src/components/ui/popover.tsx)
+- Root layout wraps entire app with `ThemeProvider` and `NavBar`.  
+  [frontend/src/app/layout.tsx](frontend/src/app/layout.tsx)
+
+**Key Flows**
+- **Theme**: `ThemeProvider` (next-themes) → `ModeToggle` dropdown → class-based dark mode via `"use client"` + `useTheme()`.
+- **Styling pipeline**: Tailwind CSS v4 → `@tailwindcss/postcss` → CSS variables (oklch) → shadcn token system → component classes via `cn()`.
+
+---
+
+## Day 13 — Responsive NavBar Component + DropdownMenu
+**Goal:** Full site navigation bar banana jo desktop + mobile dono pe responsive ho, auth-aware ho, aur dark mode support kare.
+
+**Highlights**
+- `DropdownMenu` shadcn component added via CLI (`npx shadcn@latest add dropdown-menu`).  
+  [frontend/src/components/ui/dropdown-menu.tsx](frontend/src/components/ui/dropdown-menu.tsx)
+  - Components exported: `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuSeparator`, `DropdownMenuLabel`, `DropdownMenuSub`, and more.
+- `NavBar` component built — sticky, blurred, bordered top navigation.  
+  [frontend/src/components/navbar.tsx](frontend/src/components/navbar.tsx)
+  - **Logo**: "HireHeaven" with gradient blue/red styling.
+  - **Desktop nav links**: Home (`/`), Jobs (`/jobs`), About (`/about`) using `Button` ghost variant.
+  - **Auth-aware right side**:
+    - Authenticated: `Avatar` with `Popover` showing user name, email, "My Profile" link, and "Logout" button.
+    - Unauthenticated: "Sign In" button linking to `/login`.
+  - **Mobile menu**: animated slide-in panel (`max-h` transition), hamburger icon (`Menu`) toggles to close (`X`). All nav links, profile, and logout replicated.
+  - `ModeToggle` present in both desktop and mobile views.
+  - `isAuth` and `logoutHandler` placeholders set for future Redux/context integration.
+- Home page (`page.tsx`) scaffolded with a test `Button`.  
+  [frontend/src/app/page.tsx](frontend/src/app/page.tsx)
+
+**Key Flows**
+- **Mobile toggle**: `toggleMenu()` → `isOpen` state → `max-h-96 / max-h-0` transition for smooth open/close.
+- **Auth UI**: `isAuth` boolean → conditional render of Avatar+Popover (logged in) or Sign In button (logged out).
+- **Theme toggle**: `ModeToggle` (DropdownMenu) → `setTheme("light"|"dark"|"system")` → `ThemeProvider` updates class on `<html>`.
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
@@ -363,6 +424,16 @@ Source: [services/job/src/routes/job.ts](services/job/src/routes/job.ts)
 
 ## Setup/Run Steps
 
+### Frontend
+1. Navigate to `frontend/` directory.
+2. Install dependencies: `npm install`.
+3. Start dev server: `npm run dev` (runs on `http://localhost:3000`).
+
+**Scripts**: `npm run dev`, `npm run build`, `npm run start`, `npm run lint`  
+Source: [frontend/package.json](frontend/package.json)
+
+**Required**: Backend services running and accessible for API calls.
+
 ### Auth Service
 1. Create .env using [services/auth/.env.example](services/auth/.env.example).
 2. Install dependencies.
@@ -403,7 +474,11 @@ Source: [services/job/package.json](services/job/package.json)
 ## Architecture Diagram (Text)
 
 ```
-Client
+Browser (Next.js Frontend)
+  |-- React 19 + TypeScript
+  |-- Next.js 16 App Router
+  |-- shadcn/ui (Tailwind CSS v4 + Radix UI)
+  |-- next-themes (dark/light/system)
   |
   | HTTP /api/auth/*
   v
@@ -420,7 +495,7 @@ Utils Service (Express)
   |-- SMTP (Nodemailer)  [email dispatch]
   |-- Gemini API         [career guidance + ATS analysis]
 
-Client
+Browser (Next.js Frontend)
   |
   | HTTP /api/user/*
   v
@@ -433,7 +508,7 @@ Utils Service (Express)
   |-- Cloudinary         [profile pic storage]
   |-- Gemini API         [career guidance + ATS analysis]
 
-Client
+Browser (Next.js Frontend)
   |
   | HTTP /api/job/*
   v
@@ -1160,3 +1235,10 @@ Content-Type: application/json
 - **Multer + DataURI** (`multer`, `datauri`)
 - **JWT + bcrypt** (`jsonwebtoken`, `bcrypt`)
 - **Axios** (`axios`) - HTTP client for inter-service communication
+- **Next.js + React** (`next`, `react`, `react-dom`) - Frontend framework
+- **shadcn/ui + Radix UI** (`shadcn`, `radix-ui`) - Accessible UI component library
+- **Tailwind CSS v4** (`tailwindcss`, `@tailwindcss/postcss`) - Utility-first styling
+- **next-themes** (`next-themes`) - Dark/light/system theme management
+- **Lucide React** (`lucide-react`) - Icon library
+- **clsx + tailwind-merge** (`clsx`, `tailwind-merge`) - Conditional class utilities
+- **class-variance-authority** (`class-variance-authority`) - Component variant system

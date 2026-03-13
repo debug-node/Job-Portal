@@ -10,7 +10,7 @@ Job Portal is a modern job marketplace platform with a microservices architectur
 - **User Service**: User profile management and protected profile endpoint
 - **Utils Service**: Shared utilities including email notifications, file uploads, and AI-based career/resume analysis
 - **Job Service**: Company and job management for recruiters and public job listings
-- **Frontend**: Client-side application (coming soon)
+- **Frontend**: Next.js 16 + React 19 client-side application with shadcn/ui, Tailwind CSS v4, and dark mode support
 
 ## 🏗️ Architecture
 
@@ -27,6 +27,15 @@ Job Portal is a modern job marketplace platform with a microservices architectur
 - **Email**: Nodemailer
 - **Password Hashing**: bcrypt
 - **File Handling**: Multer
+- **AI**: Google Gemini API (`@google/genai`)
+
+**Frontend:**
+- **Framework**: Next.js 16.1.6 + React 19.2.3
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **UI Components**: shadcn/ui + Radix UI
+- **Theming**: next-themes (dark/light/system)
+- **Icons**: Lucide React
 
 **Development Tools:**
 - TypeScript 5.9.3
@@ -37,7 +46,26 @@ Job Portal is a modern job marketplace platform with a microservices architectur
 
 ```
 Job-Portal/
-├── frontend/                 # React/Vue frontend (empty)
+├── frontend/                 # Next.js frontend application
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── layout.tsx   # Root layout with ThemeProvider + NavBar
+│   │   │   ├── page.tsx     # Home page
+│   │   │   └── globals.css  # Tailwind + shadcn CSS variables
+│   │   ├── components/
+│   │   │   ├── navbar.tsx   # Responsive nav (desktop + mobile)
+│   │   │   ├── mode-toggle.tsx # Dark/light/system switcher
+│   │   │   ├── theme-provider.tsx # next-themes wrapper
+│   │   │   └── ui/          # shadcn/ui components
+│   │   │       ├── button.tsx
+│   │   │       ├── avatar.tsx
+│   │   │       ├── popover.tsx
+│   │   │       └── dropdown-menu.tsx
+│   │   └── lib/
+│   │       └── utils.ts     # cn() utility (clsx + tailwind-merge)
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── next.config.ts
 ├── services/
 │   ├── auth/                # Authentication microservice
 │   │   ├── src/
@@ -131,31 +159,37 @@ Job-Portal/
    cd Job-Portal
    ```
 
-2. **Install Auth Service**
+2. **Install Frontend**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+3. **Install Auth Service**
    ```bash
    cd services/auth
    npm install
    ```
 
-3. **Install Utils Service**
+4. **Install Utils Service**
    ```bash
    cd services/utils
    npm install
    ```
 
-4. **Install User Service**
+5. **Install User Service**
    ```bash
    cd services/user
    npm install
    ```
 
-5. **Install Job Service**
+6. **Install Job Service**
    ```bash
    cd services/job
    npm install
    ```
 
-6. **Setup Environment Variables**
+7. **Setup Environment Variables**
    
    Create `.env` files in each service directory:
    
@@ -199,6 +233,12 @@ Job-Portal/
 
 **Development Mode:**
 
+Frontend:
+```bash
+cd frontend
+npm run dev
+```
+
 Auth Service:
 ```bash
 cd services/auth
@@ -225,7 +265,10 @@ npm run dev
 
 **Production Build:**
 
+Run these inside the specific project you want to build, for example:
+
 ```bash
+cd frontend
 npm run build
 npm start
 ```
@@ -329,6 +372,12 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 
 ## 🛠️ Scripts
 
+**Frontend:**
+- `npm run dev` - Start Next.js dev server (http://localhost:3000)
+- `npm run build` - Create production build
+- `npm start` - Run production server
+- `npm run lint` - Run ESLint
+
 **Auth Service:**
 - `npm run dev` - Start in development mode with hot reload
 - `npm run build` - Compile TypeScript
@@ -355,6 +404,19 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 
 ## 📦 Dependencies Overview
 
+### Frontend
+- Next.js 16.1.6 - React framework with App Router
+- React 19.2.3 - UI library
+- shadcn 4.0.5 - UI component CLI + base styles
+- radix-ui 1.4.3 - Accessible headless UI primitives
+- Tailwind CSS 4 - Utility-first CSS framework
+- next-themes 0.4.6 - Dark/light/system theme management
+- lucide-react 0.577.0 - Icon library
+- class-variance-authority 0.7.1 - Component variant system
+- clsx 2.1.1 - Conditional className utility
+- tailwind-merge 3.5.0 - Tailwind class conflict resolver
+- tw-animate-css 1.4.0 - Animation utilities
+
 ### Auth Service
 - Express 5.2.1 - Web framework
 - Kafka.js 2.2.4 - Kafka client
@@ -369,7 +431,7 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - Kafka.js 2.2.4 - Kafka consumer
 - Cloudinary 2.8.0 - File storage
 - @google/genai 1.44.0 - Gemini AI integration
-- Nodemailer 7.0.12 - Email service
+- Nodemailer 8.0.2 - Email service
 - CORS 2.8.5 - Cross-Origin Resource Sharing
 
 ### User Service
@@ -395,7 +457,7 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - ✅ User Service - In Development
 - ✅ Utils Service - In Development
 - ✅ Job Service - In Development
-- 📱 Frontend - Not Started
+- ✅ Frontend - In Development
 
 ## 📄 License
 
