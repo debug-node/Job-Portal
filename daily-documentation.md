@@ -368,6 +368,39 @@
 
 ---
 
+## Day 14 — Services CORS + Route Access + Auth Flow Fixes
+**Goal:** Services layer me cross-origin access aur route behavior ko frontend integration ke liye stabilize karna.
+
+**Highlights**
+- Auth service me `cors` middleware add kiya for browser requests.  
+  [services/auth/src/app.ts](services/auth/src/app.ts)
+- Job service me `cors` middleware add kiya for frontend API calls.  
+  [services/job/src/app.ts](services/job/src/app.ts)
+- User service me `cors` middleware add kiya and startup log cleanup.  
+  [services/user/src/index.ts](services/user/src/index.ts)
+- Auth dependencies update kiye (`cors`, `@types/cors`).  
+  [services/auth/package.json](services/auth/package.json)
+  [services/auth/package-lock.json](services/auth/package-lock.json)
+- Auth register flow me upload endpoint path normalize kiya: `API` -> `api`.  
+  [services/auth/src/controllers/auth.ts](services/auth/src/controllers/auth.ts)
+- Login validation message update: generic required-fields response.  
+  [services/auth/src/controllers/auth.ts](services/auth/src/controllers/auth.ts)
+- Job routes me company details endpoint ko public access diya (`GET /company/:id` no auth middleware).  
+  [services/job/src/routes/job.ts](services/job/src/routes/job.ts)
+- Job routes ordering adjust kiya to keep static/public routes predictable (`/:jobId` placed after specific routes).  
+  [services/job/src/routes/job.ts](services/job/src/routes/job.ts)
+- Utils routes me unused `raw` import remove kiya.  
+  [services/utils/src/routes.ts](services/utils/src/routes.ts)
+- Auth Kafka producer me send/error logging formatting cleanup kiya (no behavior change).  
+  [services/auth/src/producer.ts](services/auth/src/producer.ts)
+
+**Key Outcomes**
+- Frontend se Auth/Job/User services par direct requests ke liye CORS blockers remove hue.
+- Company details endpoint unauthenticated users ke liye accessible hua (public job discovery flow).
+- Auth-to-utils upload call path consistency improve hui (`/api/utils/upload`).
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
