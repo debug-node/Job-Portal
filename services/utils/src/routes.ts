@@ -1,4 +1,4 @@
-import express, { raw } from "express";
+import express from "express";
 import cloudinary from "cloudinary";
 
 const router = express.Router();
