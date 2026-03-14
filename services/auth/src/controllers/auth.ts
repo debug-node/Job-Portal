@@ -45,12 +45,12 @@ export const registerUser = TryCatch(async (req, res, next) => {
 		}
 
 		const { data } = await axios.post(
-			`${process.env.UPLOAD_SERVICE}/API/utils/upload`,
+			`${process.env.UPLOAD_SERVICE}/api/utils/upload`,
 			{ buffer: fileBuffer.content },
 		);
 
 		const [user] =
-			await sql`INSERT INTO users (name, email, password, phone_number, role,bio,resume,resume_public_id) VALUES (${name}, ${email}, ${hashPassword}, ${phoneNumber}, ${role}, ${bio}, ${data.url}, ${data.public_id}) RETURNING user_id, name, email, phone_number, role,bio,resume, created_at`;
+			await sql`INSERT INTO users (name, email, password, phone_number, role, bio, resume, resume_public_id) VALUES (${name}, ${email}, ${hashPassword}, ${phoneNumber}, ${role}, ${bio}, ${data.url}, ${data.public_id}) RETURNING user_id, name, email, phone_number, role,bio,resume, created_at`;
 
 		registeredUser = user;
 	}
@@ -74,7 +74,7 @@ export const loginUser = TryCatch(async (req, res, next) => {
 	const { email, password } = req.body;
 
 	if (!email || !password) {
-		throw new ErrorHandler(400, "Email and password are required");
+		throw new ErrorHandler(400, "Please fill all details");
 	}
 
 	const user = await sql`
