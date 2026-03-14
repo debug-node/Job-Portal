@@ -275,12 +275,19 @@ npm start
 
 ## 🔑 Key Features
 
+### Recent Service Updates
+- CORS enabled in Auth, User, and Job services for frontend/browser integration.
+- Auth service now uses the normalized upload endpoint path: `/api/utils/upload`.
+- Job service endpoint `GET /api/job/company/:id` is public (no auth required).
+- Auth service dependencies updated with `cors` and `@types/cors`.
+
 ### Auth Service
 - User registration with email verification
 - Login with JWT token generation
 - Forgot password with email reset link
 - Password reset functionality
 - Profile file upload (avatar/resume)
+- CORS enabled for cross-origin frontend requests
 - bcrypt password hashing
 - Multer file upload handling
 
@@ -295,6 +302,7 @@ npm start
 ### User Service
 - JWT-protected profile endpoints
 - Auth middleware for user context
+- CORS enabled for cross-origin frontend requests
 - Get user profile by ID
 - Update user profile (name, phone, bio)
 - Update profile picture with file upload
@@ -306,6 +314,7 @@ npm start
 
 ### Job Service
 - Recruiter-only company management
+- Public company details endpoint (`GET /api/job/company/:id`)
 - Recruiter-only job posting and updates
 - Public job listing with title/location filters
 - Company logo upload via utils service
