@@ -49,11 +49,15 @@ export const publishToTopic = async (topic: string, message: any) => {
 	try {
 		await producer.send({
 			topic: topic,
-			messages: [{ value: JSON.stringify(message) }],
+			messages: [
+				{
+					value: JSON.stringify(message),
+				},
+			],
 		});
 		console.log(`✅ Message published to topic "${topic}"`);
 	} catch (error) {
-		console.error("❌ Error publishing message to topic:", error);
+		console.log("❌ Error publishing message to topic.", error);
 	}
 };
 
