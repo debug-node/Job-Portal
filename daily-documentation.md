@@ -401,6 +401,236 @@
 
 ---
 
+## Day 15 — Frontend Foundation Sync
+**Goal:** Frontend base shell, dependencies, aur global styling ko stable state me lana.
+
+**Highlights**
+- Frontend dependency and lock consistency verify ki gayi.  
+  [frontend/package.json](frontend/package.json)  
+  [frontend/package-lock.json](frontend/package-lock.json)
+- App root shell and theming base align kiya gaya.  
+  [frontend/src/app/layout.tsx](frontend/src/app/layout.tsx)  
+  [frontend/src/app/globals.css](frontend/src/app/globals.css)
+
+**Key Flows**
+- Install/run consistency: `npm install` -> `npm run dev` -> no dependency drift.
+
+---
+
+## Day 16 — Home and Navigation Stabilization
+**Goal:** Landing page aur navigation ko responsive aur consistent banana.
+
+**Highlights**
+- Home hero placement and section structure refine kiya.  
+  [frontend/src/app/page.tsx](frontend/src/app/page.tsx)  
+  [frontend/src/components/hero.tsx](frontend/src/components/hero.tsx)
+- Navigation behavior desktop/mobile views ke liye align kiya.  
+  [frontend/src/components/navbar.tsx](frontend/src/components/navbar.tsx)
+
+**Key Flows**
+- Navbar state transitions verify: desktop menu, mobile toggle, auth-aware actions.
+
+---
+
+## Day 17 — Auth Screens Completion
+**Goal:** Login/register/forgot/reset user journey ko complete karna.
+
+**Highlights**
+- Login and register pages complete kiye gaye.  
+  [frontend/src/app/(auth)/login/page.tsx](frontend/src/app/(auth)/login/page.tsx)  
+  [frontend/src/app/(auth)/register/page.tsx](frontend/src/app/(auth)/register/page.tsx)
+- Forgot and reset password pages integrate ki gayi.  
+  [frontend/src/app/(auth)/forgot/page.tsx](frontend/src/app/(auth)/forgot/page.tsx)  
+  [frontend/src/app/(auth)/reset/[token]/page.tsx](frontend/src/app/(auth)/reset/[token]/page.tsx)
+
+**Key Flows**
+- User auth flow: register/login -> forgot password -> reset by token.
+
+---
+
+## Day 18 — Shared Types and Context Layer
+**Goal:** Frontend me shared data contracts aur global context ko stabilize karna.
+
+**Highlights**
+- App-level type definitions centralize kiye gaye.  
+  [frontend/src/type.ts](frontend/src/type.ts)
+- Shared app context wiring complete ki gayi.  
+  [frontend/src/context/AppContext.tsx](frontend/src/context/AppContext.tsx)
+
+**Key Flows**
+- Typed state flow: context provider -> consumer components -> predictable UI state.
+
+---
+
+## Day 19 — Jobs Listing Experience
+**Goal:** Jobs listing page ko production-ready discovery UX dena.
+
+**Highlights**
+- Jobs listing page improve ki gayi.  
+  [frontend/src/app/jobs/page.tsx](frontend/src/app/jobs/page.tsx)
+- Reusable job card component integrate hua.  
+  [frontend/src/components/job-card.tsx](frontend/src/components/job-card.tsx)
+
+**Key Flows**
+- Job browse flow: list render -> card view -> details navigation.
+
+---
+
+## Day 20 — Job Details and Loading States
+**Goal:** Single job page aur async states ko polish karna.
+
+**Highlights**
+- Single job details page finalize ki gayi.  
+  [frontend/src/app/jobs/[id]/page.tsx](frontend/src/app/jobs/[id]/page.tsx)
+- Shared loading component use karke consistent async UX diya gaya.  
+  [frontend/src/components/loading.tsx](frontend/src/components/loading.tsx)
+
+**Key Flows**
+- Job details flow: fetch -> loading -> success/error state handling.
+
+---
+
+## Day 21 — Company Details Page
+**Goal:** Company profile route ko public viewing ke liye complete karna.
+
+**Highlights**
+- Company details page with related job information complete ki gayi.  
+  [frontend/src/app/company/[id]/page.tsx](frontend/src/app/company/[id]/page.tsx)
+
+**Key Flows**
+- Company discovery: company page open -> company info + jobs mapping display.
+
+---
+
+## Day 22 — Account Dashboard Base
+**Goal:** Account routes ka base profile shell complete karna.
+
+**Highlights**
+- Account landing and profile routes finalize kiye gaye.  
+  [frontend/src/app/account/page.tsx](frontend/src/app/account/page.tsx)  
+  [frontend/src/app/account/[id]/page.tsx](frontend/src/app/account/[id]/page.tsx)
+
+**Key Flows**
+- Account route flow: `/account` -> `/account/[id]` with structured sections.
+
+---
+
+## Day 23 — Account Subcomponents Completion
+**Goal:** Account screen ke modular sections complete karna.
+
+**Highlights**
+- Profile info and skills components complete hue.  
+  [frontend/src/app/account/components/info.tsx](frontend/src/app/account/components/info.tsx)  
+  [frontend/src/app/account/components/skills.tsx](frontend/src/app/account/components/skills.tsx)
+- Company and applied jobs sections integrate hue.  
+  [frontend/src/app/account/components/company.tsx](frontend/src/app/account/components/company.tsx)  
+  [frontend/src/app/account/components/appliedJobs.tsx](frontend/src/app/account/components/appliedJobs.tsx)
+
+**Key Flows**
+- Account modules flow: profile info -> skills -> company -> applied jobs.
+
+---
+
+## Day 24 — Subscription and Payment Success Flow
+**Goal:** Subscription-to-payment success user journey complete karna.
+
+**Highlights**
+- Subscription page interactions finalize hui.  
+  [frontend/src/app/subscribe/page.tsx](frontend/src/app/subscribe/page.tsx)
+- Payment success callback page complete hui.  
+  [frontend/src/app/payment/success/[id]/page.tsx](frontend/src/app/payment/success/[id]/page.tsx)
+
+**Key Flows**
+- Conversion flow: subscribe action -> payment callback -> success state rendering.
+
+---
+
+## Day 25 — AI Utility Components Integration
+**Goal:** Career guide aur resume analyser components ko app flow me align karna.
+
+**Highlights**
+- Career guide component complete and integrated.  
+  [frontend/src/components/career-guide.tsx](frontend/src/components/career-guide.tsx)
+- Resume analyser component complete and integrated.  
+  [frontend/src/components/resume-analyser.tsx](frontend/src/components/resume-analyser.tsx)
+
+**Key Flows**
+- AI utility flow: input capture -> processing -> structured output display.
+
+---
+
+## Day 26 — Script Loader and External Integration Safety
+**Goal:** External script handling ko safe lifecycle behavior ke saath stabilize karna.
+
+**Highlights**
+- Script loader component finalize hua with controlled loading behavior.  
+  [frontend/src/components/scriptLoader.tsx](frontend/src/components/scriptLoader.tsx)
+
+**Key Flows**
+- External SDK flow: mount -> load -> ready -> cleanup.
+
+---
+
+## Day 27 — UI Primitives Consistency Pass
+**Goal:** Reusable UI primitives me design and behavior consistency maintain karna.
+
+**Highlights**
+- Updated/new UI primitives review and normalization complete hua.  
+  [frontend/src/components/ui/button.tsx](frontend/src/components/ui/button.tsx)  
+  [frontend/src/components/ui/avatar.tsx](frontend/src/components/ui/avatar.tsx)  
+  [frontend/src/components/ui/popover.tsx](frontend/src/components/ui/popover.tsx)  
+  [frontend/src/components/ui/dropdown-menu.tsx](frontend/src/components/ui/dropdown-menu.tsx)  
+  [frontend/src/components/ui/card.tsx](frontend/src/components/ui/card.tsx)  
+  [frontend/src/components/ui/dialog.tsx](frontend/src/components/ui/dialog.tsx)  
+  [frontend/src/components/ui/input.tsx](frontend/src/components/ui/input.tsx)  
+  [frontend/src/components/ui/label.tsx](frontend/src/components/ui/label.tsx)  
+  [frontend/src/components/ui/select.tsx](frontend/src/components/ui/select.tsx)
+
+**Key Flows**
+- Component reuse flow: common props -> shared styles -> predictable interaction patterns.
+
+---
+
+## Day 28 — About Page and Asset Polish
+**Goal:** Branding assets aur static pages ko final polish dena.
+
+**Highlights**
+- About page content and layout complete hua.  
+  [frontend/src/app/about/page.tsx](frontend/src/app/about/page.tsx)
+- Public assets integrate and optimize kiye gaye.  
+  [frontend/public/hero.jpeg](frontend/public/hero.jpeg)  
+  [frontend/public/about.jpg](frontend/public/about.jpg)  
+  [frontend/public/user.png](frontend/public/user.png)
+
+**Key Flows**
+- Static render flow: route open -> optimized image assets -> stable layout.
+
+---
+
+## Day 29 — Cross-Route QA and Regression
+**Goal:** Full frontend routes ka integration QA pass complete karna.
+
+**Highlights**
+- Route-to-route manual regression run kiya gaya (auth -> jobs -> account -> subscribe).
+- API response mapping verify ki gayi with active backend endpoints.
+
+**Key Flows**
+- End-to-end smoke flow: authentication -> browsing -> profile actions -> payment confirmation.
+
+---
+
+## Day 30 — Release Readiness and Documentation Freeze
+**Goal:** Final bug-fix closure aur release documentation complete karna.
+
+**Highlights**
+- QA backlog se critical UI/flow issues close kiye gaye.
+- Frontend release summary and documentation freeze complete hua.
+
+**Key Flows**
+- Release handover flow: final validation -> docs sync -> deployment-ready state.
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
