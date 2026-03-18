@@ -11,6 +11,8 @@ Job Portal is a modern job marketplace platform with a microservices architectur
 - **Utils Service**: Shared utilities including email notifications, file uploads, and AI-based career/resume analysis
 - **Job Service**: Company and job management for recruiters and public job listings
 - **Frontend**: Next.js 16 + React 19 client-side application with shadcn/ui, Tailwind CSS v4, and dark mode support
+   - Auth flows, jobs browsing, company profile, account dashboard, subscribe/payment success journey
+   - Shared React context and centralized app-level type definitions
 
 ## 🏗️ Architecture
 
@@ -281,6 +283,24 @@ npm start
 - Job service endpoint `GET /api/job/company/:id` is public (no auth required).
 - Auth service dependencies updated with `cors` and `@types/cors`.
 
+### Recent Frontend Updates
+- App routes expanded for core journeys:
+   - Auth pages: login, register, forgot, reset
+   - Jobs pages: listing and single job details
+   - Company details page
+   - Account pages: profile shell and modular account sections
+   - Subscribe and payment success pages
+- Reusable feature components added and integrated:
+   - hero, job-card, loading, career-guide, resume-analyser, scriptLoader
+- UI primitive library expanded:
+   - card, dialog, input, label, select
+   - existing primitives refined: button, avatar, popover, dropdown-menu
+- Shared state and data typing stabilized:
+   - `AppContext` for app-level state flow
+   - `type.ts` for centralized frontend contracts
+- Static assets integrated for branding surfaces:
+   - hero, about, and user profile images
+
 ### Auth Service
 - User registration with email verification
 - Login with JWT token generation
@@ -467,6 +487,22 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - ✅ Utils Service - In Development
 - ✅ Job Service - In Development
 - ✅ Frontend - In Development
+
+## 🧭 Frontend Route Coverage
+
+- `/` - Home (hero + landing blocks)
+- `/about` - About page
+- `/jobs` - Job listing
+- `/jobs/:id` - Single job details
+- `/company/:id` - Company details
+- `/account` - Account landing
+- `/account/:id` - Account profile view
+- `/subscribe` - Subscription flow
+- `/payment/success/:id` - Payment success callback
+- `/login` - Login page
+- `/register` - Register page
+- `/forgot` - Forgot password page
+- `/reset/:token` - Reset password page
 
 ## 📄 License
 
