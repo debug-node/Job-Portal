@@ -284,22 +284,29 @@ npm start
 - Auth service dependencies updated with `cors` and `@types/cors`.
 
 ### Recent Frontend Updates
-- App routes expanded for core journeys:
-   - Auth pages: login, register, forgot, reset
-   - Jobs pages: listing and single job details
-   - Company details page
-   - Account pages: profile shell and modular account sections
-   - Subscribe and payment success pages
-- Reusable feature components added and integrated:
+- Core route coverage completed:
+   - Home, About, Auth (login/register/forgot/reset)
+   - Jobs listing + single job details
+   - Company details
+   - Account dashboard + profile sub-sections
+   - Subscribe and payment success flow
+- Reusable feature components integrated:
    - hero, job-card, loading, career-guide, resume-analyser, scriptLoader
-- UI primitive library expanded:
+- Shared app architecture stabilized:
+   - global context state management via `AppContext`
+   - centralized frontend contracts in `type.ts`
+- UI system expanded and normalized:
+   - button, avatar, popover, dropdown-menu
    - card, dialog, input, label, select
-   - existing primitives refined: button, avatar, popover, dropdown-menu
-- Shared state and data typing stabilized:
-   - `AppContext` for app-level state flow
-   - `type.ts` for centralized frontend contracts
-- Static assets integrated for branding surfaces:
+- Branding/static assets integrated for polished UI surfaces:
    - hero, about, and user profile images
+
+### Frontend Performance Optimizations
+- Image rendering optimized with Next.js `Image` and lazy loading in list-heavy UI.
+- Pagination added for large lists (applied jobs and recruiter-side job applications).
+- Debounced interactions used for search/filter behavior to reduce API thrashing.
+- Lazy loading and code-splitting utilities added for heavy/secondary components.
+- Overall frontend interaction flow improved for faster render, lower DOM load, and smoother UX.
 
 ### Auth Service
 - User registration with email verification
