@@ -23,7 +23,7 @@ const AccountPage = () => {
 	return (
 		<>
 			{user && (
-				<div className="w-[90%] md:w-[60%] m-auto">
+				<div className="ui-shell w-[92%] md:w-[70%] lg:w-[62%]">
 					<Info user={user} isYourAccount={true} />
 					{user.role === "jobseeker" && (
 						<Skills user={user} isYourAccount={true} />
