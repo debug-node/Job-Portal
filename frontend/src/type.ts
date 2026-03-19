@@ -75,8 +75,8 @@ export interface AppContextType {
 	setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 	setIsAuth: React.Dispatch<React.SetStateAction<boolean>>;
 	logoutUser: () => Promise<void>;
-	updateProfilePic: (formData: any) => Promise<void>;
-	updateResume: (formData: any) => Promise<void>;
+	updateProfilePic: (formData: FormData) => Promise<void>;
+	updateResume: (formData: FormData) => Promise<void>;
 	updateUser: (name: string, phoneNumber: string, bio: string) => Promise<void>;
 	addSkill: (
 		skill: string,
@@ -85,14 +85,14 @@ export interface AppContextType {
 	removeSkill: (skill: string) => Promise<void>;
 	applyJob: (job_id: number) => Promise<void>;
 	applications: Application[];
-	fetchApplications: () => Promise<void>;
+	fetchApplications: (page?: number) => Promise<void>;
 }
 
 export interface AppProviderProps {
 	children: ReactNode;
 }
 
-export interface AccontProps {
+export interface AccountProps {
 	user: User;
 	isYourAccount: boolean;
 }
@@ -110,7 +110,7 @@ export interface Job {
 	company_id: number;
 	company_name: string;
 	company_logo: string;
-	posted_by_recuriter_id: number;
+	posted_by_recruiter_id: number;
 	created_at: string;
 	is_active: boolean;
 }
