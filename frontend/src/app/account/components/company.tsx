@@ -1,6 +1,6 @@
 "use client";
 import { job_service, useAppData } from "@/context/AppContext";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -12,10 +12,11 @@ import {
 	Eye,
 	FileText,
 	Globe,
-	Image,
+	ImageIcon,
 	Plus,
 	Trash2,
 } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Company as CompanyType } from "@/type";
 import Link from "next/link";
@@ -57,7 +58,7 @@ const Company = () => {
 
 	const [companyLoading, setCompanyLoading] = useState(true);
 
-	async function fetchCompanies() {
+	const fetchCompanies = useCallback(async () => {
 		try {
 			const { data } = await axios.get(`${job_service}/api/job/company/all`, {
 				headers: {
@@ -71,11 +72,15 @@ const Company = () => {
 		} finally {
 			setCompanyLoading(false);
 		}
-	}
+	}, [token]);
 
-	async function addCompanyHandler() {
+	useEffect(() => {
+		fetchCompanies();
+	}, [fetchCompanies]);
+
+	const addCompanyHandler = async () => {
 		if (!name || !description || !website || !logo) {
-			return alert("Please Provide all details");
+			return toast.error("Please provide all required details");
 		}
 
 		const formData = new FormData();
@@ -99,12 +104,14 @@ const Company = () => {
 			toast.success(data.message);
 			clearData();
 			fetchCompanies();
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to update company");
 		} finally {
 			setBtnLoading(false);
 		}
-	}
+	};
 
 	async function deleteCompany(id: string) {
 		if (confirm("Are you sure you want to delete this company")) {
@@ -121,27 +128,26 @@ const Company = () => {
 
 				toast.success(data.message);
 				fetchCompanies();
-			} catch (error: any) {
-				toast.error(error.response.data.message);
+			} catch (error: unknown) {
+				const axiosError = (
+					error as { response?: { data?: { message?: string } } }
+				)?.response?.data?.message;
+				toast.error(axiosError || "Failed to delete company");
 			} finally {
 				setBtnLoading(false);
 			}
 		}
 	}
 
-	useEffect(() => {
-		fetchCompanies();
-	}, []);
-
 	if (loading) return <Loading />;
 	return (
 		<div className="max-w-7xl mx-auto px-4 py-6">
 			<Card className="shadow-lg border-2 overflow-hidden">
-				<div className="bg-blue-500 p-6 border-b">
+				<div className="bg-linear-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 p-6 border-b">
 					<div className="flex items-center justify-between flex-wrap gap-4">
 						<div className="flex items-center gap-3">
-							<div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-								<Building2 size={20} className="text-blue-600" />
+							<div className="h-10 w-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+								<Building2 size={20} className="text-white" />
 							</div>
 						</div>
 						<CardTitle className="text-2xl text-white">
@@ -170,11 +176,13 @@ const Company = () => {
 									<div
 										key={c.company_id}
 										className="flex items-center gap-4 p-4 rounded-lg border-2 hover:border-blue-500 transition-all bg-background">
-										<div className="h-16 w-16 rounded-full border-2 overflow-hidden shrink-0 bg-background">
-											<img
+										<div className="h-16 w-16 rounded-full border-2 overflow-hidden shrink-0 bg-background relative">
+											<Image
 												src={c.logo}
-												alt=""
-												className="w-full h-full object-cover"
+												alt={`${c.name} logo`}
+												fill
+												className="object-cover"
+												sizes="64px"
 											/>
 										</div>
 
@@ -293,7 +301,7 @@ const Company = () => {
 							<Input
 								id="website"
 								type="text"
-								placeholder="Enter Description"
+								placeholder="https://company.com"
 								className="h-11"
 								value={website}
 								onChange={(e) => setWebsite(e.target.value)}
@@ -304,7 +312,7 @@ const Company = () => {
 							<Label
 								htmlFor="logo"
 								className="text-sm font-medium flex items-center gap-2">
-								<Image size={16} /> CompanyLogo
+								<ImageIcon size={16} /> Company Logo
 							</Label>
 							<Input
 								id="logo"
