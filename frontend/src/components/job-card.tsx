@@ -1,17 +1,11 @@
 "use client";
 import { useAppData } from "@/context/AppContext";
-import { Job } from "@/type";
+import { Job, Application } from "@/type";
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "./ui/card";
-import {
-	ArrowRight,
-	Briefcase,
-	Building2,
-	CheckCircle,
-	DollarSign,
-	MapPin,
-} from "lucide-react";
+import { ArrowRight, Briefcase, Building2, CheckCircle, DollarSign } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "./ui/button";
 
 interface JobCardProps {
@@ -29,14 +23,14 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
 	useEffect(() => {
 		if (applications && job.job_id) {
-			applications.forEach((item: any) => {
+			applications.forEach((item: Application) => {
 				if (item.job_id === job.job_id) setApplied(true);
 			});
 		}
 	}, [applications, job.job_id]);
 
 	return (
-		<Card className="w-full max-w-95 hover:shadow-lg transition-all duration-300 border-2 hover:border-blue-500 group">
+		<Card className="w-full max-w-95 hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-500 group bg-card/80 backdrop-blur-sm">
 			<CardHeader className="space-y-4 pb-4">
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex-1 min-w-0">
@@ -50,11 +44,14 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
 					</div>
 
 					<Link href={`/company/${job.company_id}`} className="shrink-0">
-						<div className="w-14 h-14 rounded-xl border-2 overflow-hidden hover:scale-105 transition-transform bg-background">
-							<img
+						<div className="w-14 h-14 rounded-xl border-2 overflow-hidden hover:scale-105 transition-transform bg-background shadow-sm">
+							<Image
 								src={job.company_logo}
-								alt=""
+								alt={`${job.company_name} logo`}
+								width={56}
+								height={56}
 								className="w-full h-full object-cover"
+								loading="lazy"
 							/>
 						</div>
 					</Link>
@@ -62,8 +59,7 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
 				<div className="space-y-2">
 					<div className="flex items-center gap-2 text-sm">
-						<div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600">
-							<MapPin size={14} />
+						<div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-linear-to-r from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-950/20 text-blue-600 border border-blue-200 dark:border-blue-800">
 							<span className="font-medium">{job.location}</span>
 						</div>
 					</div>
@@ -113,7 +109,7 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
 				{job.is_active === false && (
 					<div className="w-full text-center text-sm text-red-600 bg-red-100 dark:bg-red-900/30 rounded-md px-3 py-2 font-medium">
-						Postion Closed
+						Position Closed
 					</div>
 				)}
 			</CardContent>
