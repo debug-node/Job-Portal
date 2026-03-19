@@ -631,6 +631,134 @@
 
 ---
 
+## Day 31 — Frontend Route Integration (Auth + Core Pages)
+**Goal:** Core user-facing routes ko fully integrated state me document aur align karna.
+
+**Highlights**
+- Auth flow pages (login/register/forgot/reset) integration complete.  
+  [frontend/src/app/(auth)/login/page.tsx](frontend/src/app/(auth)/login/page.tsx)  
+  [frontend/src/app/(auth)/register/page.tsx](frontend/src/app/(auth)/register/page.tsx)  
+  [frontend/src/app/(auth)/forgot/page.tsx](frontend/src/app/(auth)/forgot/page.tsx)  
+  [frontend/src/app/(auth)/reset/[token]/page.tsx](frontend/src/app/(auth)/reset/[token]/page.tsx)
+- Home and about pages with navigation flow aligned.  
+  [frontend/src/app/page.tsx](frontend/src/app/page.tsx)  
+  [frontend/src/app/about/page.tsx](frontend/src/app/about/page.tsx)  
+  [frontend/src/components/navbar.tsx](frontend/src/components/navbar.tsx)
+
+**Key Flows**
+- Visitor flow: Home -> About -> Auth pages -> back to protected features.
+
+---
+
+## Day 32 — Jobs + Company Module Consolidation
+**Goal:** Job discovery aur company information flows ko stable user journey me complete karna.
+
+**Highlights**
+- Jobs listing and job details route coverage complete.  
+  [frontend/src/app/jobs/page.tsx](frontend/src/app/jobs/page.tsx)  
+  [frontend/src/app/jobs/[id]/page.tsx](frontend/src/app/jobs/[id]/page.tsx)
+- Company details page integration with related display flow complete.  
+  [frontend/src/app/company/[id]/page.tsx](frontend/src/app/company/[id]/page.tsx)
+- Reusable job rendering components finalized.  
+  [frontend/src/components/job-card.tsx](frontend/src/components/job-card.tsx)  
+  [frontend/src/components/loading.tsx](frontend/src/components/loading.tsx)
+
+**Key Flows**
+- Discovery flow: Job list -> Job details -> Company details.
+
+---
+
+## Day 33 — Account + Subscription Journey Completion
+**Goal:** User account dashboard aur subscription/payment flow ko end-to-end complete karna.
+
+**Highlights**
+- Account base pages and profile route integration complete.  
+  [frontend/src/app/account/page.tsx](frontend/src/app/account/page.tsx)  
+  [frontend/src/app/account/[id]/page.tsx](frontend/src/app/account/[id]/page.tsx)
+- Account subcomponents consolidated (info, skills, company, applied jobs).  
+  [frontend/src/app/account/components/info.tsx](frontend/src/app/account/components/info.tsx)  
+  [frontend/src/app/account/components/skills.tsx](frontend/src/app/account/components/skills.tsx)  
+  [frontend/src/app/account/components/company.tsx](frontend/src/app/account/components/company.tsx)  
+  [frontend/src/app/account/components/appliedJobs.tsx](frontend/src/app/account/components/appliedJobs.tsx)
+- Subscription and payment success flow verified.  
+  [frontend/src/app/subscribe/page.tsx](frontend/src/app/subscribe/page.tsx)  
+  [frontend/src/app/payment/success/[id]/page.tsx](frontend/src/app/payment/success/[id]/page.tsx)
+
+**Key Flows**
+- User flow: Profile dashboard -> plan subscribe -> payment success callback.
+
+---
+
+## Day 34 — Shared UI System + State Layer Alignment
+**Goal:** Reusable UI primitives, shared types, aur context ko maintainable structure me align karna.
+
+**Highlights**
+- Shared type contracts and global context wiring stabilized.  
+  [frontend/src/type.ts](frontend/src/type.ts)  
+  [frontend/src/context/AppContext.tsx](frontend/src/context/AppContext.tsx)
+- Expanded UI primitives normalized for consistent behavior.  
+  [frontend/src/components/ui/button.tsx](frontend/src/components/ui/button.tsx)  
+  [frontend/src/components/ui/avatar.tsx](frontend/src/components/ui/avatar.tsx)  
+  [frontend/src/components/ui/popover.tsx](frontend/src/components/ui/popover.tsx)  
+  [frontend/src/components/ui/dropdown-menu.tsx](frontend/src/components/ui/dropdown-menu.tsx)  
+  [frontend/src/components/ui/card.tsx](frontend/src/components/ui/card.tsx)  
+  [frontend/src/components/ui/dialog.tsx](frontend/src/components/ui/dialog.tsx)  
+  [frontend/src/components/ui/input.tsx](frontend/src/components/ui/input.tsx)  
+  [frontend/src/components/ui/label.tsx](frontend/src/components/ui/label.tsx)  
+  [frontend/src/components/ui/select.tsx](frontend/src/components/ui/select.tsx)
+
+**Key Flows**
+- Component reuse flow: shared props + shared variants -> predictable UI rendering.
+
+---
+
+## Day 35 — AI Utilities + Script Integration Finalization
+**Goal:** AI utility features aur external script flows ko finalize karna.
+
+**Highlights**
+- Career guide and resume analyser components integrated and validated.  
+  [frontend/src/components/career-guide.tsx](frontend/src/components/career-guide.tsx)  
+  [frontend/src/components/resume-analyser.tsx](frontend/src/components/resume-analyser.tsx)
+- External script loader lifecycle handling finalize ki gayi.  
+  [frontend/src/components/scriptLoader.tsx](frontend/src/components/scriptLoader.tsx)
+
+**Key Flows**
+- AI interaction flow: input -> process -> structured output render.
+
+---
+
+## Day 36 — Frontend Performance Optimization Pass
+**Goal:** Frontend performance ko optimize karke faster load/render experience dena.
+
+**Highlights**
+- **Image Optimization**: Job cards me native `<img>` ki jagah Next.js `Image` use kiya gaya with lazy loading.  
+  [frontend/src/components/job-card.tsx](frontend/src/components/job-card.tsx)
+- **Lazy Loading + Code Splitting**: Heavy components ke liye lazy loading utilities add ki gayi.  
+  [frontend/src/lib/lazyLoad.tsx](frontend/src/lib/lazyLoad.tsx)
+- **Debounce Utilities**: Search/input interactions optimize karne ke liye debounce helpers add kiye gaye.  
+  [frontend/src/lib/debounce.ts](frontend/src/lib/debounce.ts)
+- **Pagination Component**: Reusable pagination UI add kiya for large lists.  
+  [frontend/src/components/ui/pagination.tsx](frontend/src/components/ui/pagination.tsx)
+- **Applied Jobs Pagination**: Account page par applied jobs list me paginated rendering add hui.  
+  [frontend/src/app/account/components/appliedJobs.tsx](frontend/src/app/account/components/appliedJobs.tsx)
+- **Job Applications Pagination**: Recruiter-side job applications list me pagination + memoized filtering integrate hua.  
+  [frontend/src/app/jobs/[id]/page.tsx](frontend/src/app/jobs/[id]/page.tsx)
+- **Search Debouncing Validation**: Jobs listing page ke debounce behavior ko validate/retain kiya gaya.  
+  [frontend/src/app/jobs/page.tsx](frontend/src/app/jobs/page.tsx)
+
+**Key Flows**
+- **Image Rendering Flow**: Optimized image component -> lazy fetch -> stable layout rendering.
+- **Listing Performance Flow**: Data list -> memoized filtering -> paginated slice -> reduced DOM render cost.
+- **Search Performance Flow**: User typing -> debounce delay -> controlled API calls -> smooth interaction.
+
+**Optimization Coverage**
+- Image optimization + lazy loading for media-heavy UI.
+- On-demand component loading for modal/secondary interactions.
+- Pagination for large datasets to reduce initial render load.
+- Debounced search/filter calls to avoid API thrashing.
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
