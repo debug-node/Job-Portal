@@ -1,13 +1,14 @@
 "use client";
 import { useParams } from "next/navigation";
 import Cookies from "js-cookie";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { job_service, useAppData } from "@/context/AppContext";
 import { Company, Job } from "@/type";
 import axios from "axios";
 import Loading from "@/components/loading";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
 	Briefcase,
@@ -22,7 +23,6 @@ import {
 	MapPin,
 	Pencil,
 	Plus,
-	Trash2,
 	Users,
 	XCircle,
 } from "lucide-react";
@@ -50,12 +50,12 @@ const CompanyPage = () => {
 	const { id } = useParams();
 	const token = Cookies.get("token");
 
-	const { user, isAuth } = useAppData();
+	const { user } = useAppData();
 	const [loading, setLoading] = useState(false);
 	const [btnLoading, setBtnLoading] = useState(false);
 	const [company, setCompany] = useState<Company | null>(null);
 
-	async function fetchCompany() {
+	const fetchCompany = useCallback(async () => {
 		try {
 			setLoading(true);
 			const { data } = await axios.get(`${job_service}/api/job/company/${id}`);
@@ -65,11 +65,11 @@ const CompanyPage = () => {
 		} finally {
 			setLoading(false);
 		}
-	}
+	}, [id]);
 
 	useEffect(() => {
 		fetchCompany();
-	}, [id]);
+	}, [fetchCompany]);
 
 	const isRecruiterOwner = user && company && user.user_id === company.recruiter_id;
 
@@ -77,7 +77,6 @@ const CompanyPage = () => {
 	const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
 	const addModalRef = useRef<HTMLButtonElement>(null);
-	const updateModalRef = useRef<HTMLButtonElement>(null);
 
 	const [title, settitle] = useState("");
 	const [description, setdescription] = useState("");
@@ -126,31 +125,13 @@ const CompanyPage = () => {
 			fetchCompany();
 			clearInput();
 			addModalRef.current?.click();
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
 			console.log(error);
-			toast.error(error.response.data.message);
+			toast.error(axiosError || "Failed to post job");
 		} finally {
 			setBtnLoading(false);
-		}
-	};
-
-	const deleteHandler = async (jobId: number) => {
-		if (confirm("Are you sure you want to delete this job?")) {
-			setBtnLoading(true);
-			try {
-				await axios.delete(`${job_service}/api/job/${jobId}`, {
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
-				});
-
-				toast.success("Job has been deleted");
-				fetchCompany();
-			} catch (error: any) {
-				toast.error(error.response.data.message);
-			} finally {
-				setBtnLoading(false);
-			}
 		}
 	};
 
@@ -200,8 +181,10 @@ const CompanyPage = () => {
 			toast.success("Job updated successfully");
 			fetchCompany();
 			handleCloseUpdateModal();
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to update job");
 		} finally {
 			setBtnLoading(false);
 		}
@@ -216,11 +199,13 @@ const CompanyPage = () => {
 						<div className="h-32 bg-blue-600"></div>
 						<div className="px-8 pb-8">
 							<div className="flex flex-col md:flex-row gap-6 items-start md:items-end -mt-16">
-								<div className="w-32 h-32 rounded-2xl border-4 border-background overflow-hidden shadow-xl bg-background shrink-0">
-									<img
+								<div className="w-32 h-32 rounded-2xl border-4 border-background overflow-hidden shadow-xl bg-background shrink-0 relative">
+									<Image
 										src={company.logo}
-										alt=""
-										className="w-full h-full object-cover"
+										alt={`${company.name} logo`}
+										fill
+										className="object-cover"
+										sizes="128px"
 									/>
 								</div>
 
@@ -280,7 +265,7 @@ const CompanyPage = () => {
 									<DialogContent className="sm:max-w-150 max-h-[90vh] overflow-y-auto">
 										<DialogHeader>
 											<DialogTitle className="text-2xl flex items-center gap-2">
-												Post a new Job
+												Post a new job
 											</DialogTitle>
 										</DialogHeader>
 
@@ -294,7 +279,7 @@ const CompanyPage = () => {
 												<Input
 													id="title"
 													type="text"
-													placeholder="Enter Job title"
+													placeholder="Enter job title"
 													className="h-11"
 													value={title}
 													onChange={(e) =>
@@ -312,7 +297,7 @@ const CompanyPage = () => {
 												<Input
 													id="description"
 													type="text"
-													placeholder="Enter Description"
+													placeholder="Enter description"
 													className="h-11"
 													value={description}
 													onChange={(e) =>
@@ -331,7 +316,7 @@ const CompanyPage = () => {
 												<Input
 													id="role"
 													type="text"
-													placeholder="Enter Job Role"
+													placeholder="Enter job role"
 													className="h-11"
 													value={role}
 													onChange={(e) =>
@@ -581,7 +566,7 @@ const CompanyPage = () => {
 												/>
 											</div>
 											<p className="text-base opacity-70 mb-2">
-												No jobs postet yet
+												No jobs posted yet
 											</p>
 										</div>
 									</>
@@ -610,7 +595,7 @@ const CompanyPage = () => {
 									<Input
 										id="title"
 										type="text"
-										placeholder="Enter Job title"
+										placeholder="Enter job title"
 										className="h-11"
 										value={title}
 										onChange={(e) => settitle(e.target.value)}
@@ -626,7 +611,7 @@ const CompanyPage = () => {
 									<Input
 										id="description"
 										type="text"
-										placeholder="Enter Description"
+										placeholder="Enter description"
 										className="h-11"
 										value={description}
 										onChange={(e) => setdescription(e.target.value)}
@@ -642,7 +627,7 @@ const CompanyPage = () => {
 									<Input
 										id="role"
 										type="text"
-										placeholder="Enter Job Role"
+										placeholder="Enter job role"
 										className="h-11"
 										value={role}
 										onChange={(e) => setrole(e.target.value)}
