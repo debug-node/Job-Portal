@@ -1,8 +1,8 @@
 "use client";
 import { auth_service, useAppData } from "@/context/AppContext";
 import axios from "axios";
-import { redirect } from "next/navigation";
-import React, { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import React, { FormEvent, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Cookies from "js-cookie";
 import { Label } from "@/components/ui/label";
@@ -21,12 +21,19 @@ const RegisterPage = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [btnLoading, setBtnLoading] = useState(false);
+	const router = useRouter();
 
-	const { isAuth, setUser, loading, setIsAuth } = useAppData();
+	const { isAuth, user, setUser, loading, setIsAuth } = useAppData();
+
+	useEffect(() => {
+		if (!loading && isAuth && user) {
+			router.replace(user.role === "recruiter" ? "/account" : "/jobs");
+		}
+	}, [isAuth, loading, router, user]);
 
 	if (loading) return <Loading />;
 
-	if (isAuth) return redirect("/");
+	if (isAuth) return <Loading />;
 
 	const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -61,8 +68,11 @@ const RegisterPage = () => {
 			});
 			setUser(data.registeredUser);
 			setIsAuth(true);
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+			router.push(data.registeredUser?.role === "recruiter" ? "/account" : "/jobs");
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Registration failed");
 			setIsAuth(false);
 		} finally {
 			setBtnLoading(false);
@@ -70,15 +80,17 @@ const RegisterPage = () => {
 	};
 
 	return (
-		<div className="min-h-screen flex items-center justify-center px-4 py-12">
+		<div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+			<div className="absolute -top-16 -right-20 w-72 h-72 bg-red-500/10 rounded-full blur-3xl" />
+			<div className="absolute -bottom-20 -left-24 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
 			<div className="w-full max-w-md">
-				<div className="text-center mb-8">
+				<div className="text-center mb-8 relative z-10">
 					<h1 className="text-4xl font-bold mb-2">Join HireHeaven</h1>
 					<p className="text-sm opacity-70">
 						Create your account to start a new journey
 					</p>
 				</div>
-				<div className="border border-gray-400 rounded-2xl p-8 shadow-lg backdrop-blur-sm">
+				<div className="border rounded-2xl p-8 shadow-xl bg-card/80 backdrop-blur-sm relative z-10">
 					<form onSubmit={submitHandler} className="space-y-5">
 						<div className="space-y-2">
 							<Label htmlFor="role" className="text-sm font-medium">
@@ -240,11 +252,11 @@ const RegisterPage = () => {
 
 					<div className="mt-6 pt-6 border-t border-gray-400">
 						<p className="text-center text-sm">
-							Already have an account{" "}
+							Already have an account?{" "}
 							<Link
-								href={"/register"}
+								href={"/login"}
 								className="text-blue-500 font-medium hover:underline transition-all">
-								Login?
+								Sign in
 							</Link>
 						</p>
 					</div>
