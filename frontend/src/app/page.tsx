@@ -9,10 +9,14 @@ const Home = () => {
 	const { loading } = useAppData();
 	if (loading) return <Loading />;
 	return (
-		<div>
+		<div className="space-y-2">
 			<Hero />
-			<CareerGuide />
-			<ResumeAnalyzer />
+			<div className="border-y bg-background/70">
+				<CareerGuide />
+			</div>
+			<div className="bg-secondary/20">
+				<ResumeAnalyzer />
+			</div>
 		</div>
 	);
 };
