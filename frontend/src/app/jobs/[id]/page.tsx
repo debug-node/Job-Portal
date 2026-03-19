@@ -2,6 +2,7 @@
 import Loading from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { job_service, useAppData } from "@/context/AppContext";
 import { Application, Job } from "@/type";
 import axios from "axios";
@@ -15,14 +16,16 @@ import {
 	Users,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
+const APPLICATIONS_PER_PAGE = 10;
+
 const JobPage = () => {
 	const { id } = useParams();
-	const { user, isAuth, applyJob, applications, btnLoading } = useAppData();
+	const { user, applyJob, applications, btnLoading } = useAppData();
 	const router = useRouter();
 
 	const [job, setJob] = useState<Job | null>(null);
@@ -31,7 +34,7 @@ const JobPage = () => {
 
 	useEffect(() => {
 		if (applications && id) {
-			applications.forEach((item: any) => {
+			applications.forEach((item: Application) => {
 				if (item.job_id.toString() === id) setApplied(true);
 			});
 		}
@@ -43,18 +46,17 @@ const JobPage = () => {
 
 	const [loading, setLoading] = useState(true);
 
-	async function fetchSingleJob() {
-		try {
-			const { data } = await axios.get(`${job_service}/api/job/${id}`);
-			setJob(data);
-		} catch (error) {
-			console.log(error);
-		} finally {
-			setLoading(false);
-		}
-	}
-
 	useEffect(() => {
+		async function fetchSingleJob() {
+			try {
+				const { data } = await axios.get(`${job_service}/api/job/${id}`);
+				setJob(data);
+			} catch (error) {
+				console.log(error);
+			} finally {
+				setLoading(false);
+			}
+		}
 		fetchSingleJob();
 	}, [id]);
 
@@ -62,7 +64,7 @@ const JobPage = () => {
 
 	const token = Cookies.get("token");
 
-	async function fetchJobApplications() {
+	const fetchJobApplications = useCallback(async () => {
 		try {
 			const { data } = await axios.get(`${job_service}/api/job/application/${id}`, {
 				headers: {
@@ -74,25 +76,34 @@ const JobPage = () => {
 		} catch (error) {
 			console.log(error);
 		}
-	}
+	}, [id, token]);
 
 	useEffect(() => {
-		if (user && job && user.user_id === job.posted_by_recuriter_id) {
+		if (user && job && user.user_id === job.posted_by_recruiter_id) {
 			fetchJobApplications();
 		}
-	}, [user, job]);
+	}, [user, job, id, token, fetchJobApplications]);
 
 	const [filterStatus, setFilterStatus] = useState("All");
+	const [currentPage, setCurrentPage] = useState(1);
 
-	const filteredApplications =
-		filterStatus === "All"
+	const filteredApplications = useMemo(() => {
+		return filterStatus === "All"
 			? jobApplications
 			: jobApplications.filter((app) => app.status === filterStatus);
+	}, [filterStatus, jobApplications]);
+
+	const paginatedApplications = useMemo(() => {
+		const startIdx = (currentPage - 1) * APPLICATIONS_PER_PAGE;
+		return filteredApplications.slice(startIdx, startIdx + APPLICATIONS_PER_PAGE);
+	}, [filteredApplications, currentPage]);
+
+	const totalPages = Math.ceil(filteredApplications.length / APPLICATIONS_PER_PAGE);
 
 	const [value, setValue] = useState("");
 
 	const updateApplicationHandler = async (id: number) => {
-		if (value === "") return toast.error("Please give valid value");
+		if (value === "") return toast.error("Please select a valid status");
 
 		try {
 			const { data } = await axios.put(
@@ -107,8 +118,10 @@ const JobPage = () => {
 
 			toast.success(data.message);
 			fetchJobApplications();
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to update application status");
 		}
 	};
 	return (
@@ -232,7 +245,7 @@ const JobPage = () => {
 													Openings
 												</p>
 												<p className="font-semibold">
-													{job.openings} postions
+													{job.openings} positions
 												</p>
 											</div>
 										</div>
@@ -261,7 +274,7 @@ const JobPage = () => {
 				</>
 			)}
 
-			{user && job && user.user_id === job.posted_by_recuriter_id && (
+			{user && job && user.user_id === job.posted_by_recruiter_id && (
 				<div className="w-[90%] md:w-2/3 container mx-auto mt-8 mb-8">
 					<div className="flex items-center justify-between mb-4 flex-wrap gap-3">
 						<h2 className="text-2xl font-bold">All Applications</h2>
@@ -274,7 +287,10 @@ const JobPage = () => {
 							<select
 								id="filter-status"
 								value={filterStatus}
-								onChange={(e) => setFilterStatus(e.target.value)}
+								onChange={(e) => {
+									setFilterStatus(e.target.value);
+									setCurrentPage(1);
+								}}
 								className="p-2 border-2 border-gray-300 rounded-md bg-background">
 								<option value="All">All Status</option>
 								<option value="Submitted">Submitted</option>
@@ -287,7 +303,7 @@ const JobPage = () => {
 					{jobApplications && jobApplications.length > 0 ? (
 						<>
 							<div className="space-y-4">
-								{filteredApplications.map((e) => (
+								{paginatedApplications.map((e) => (
 									<div
 										className="p-4 rounded-lg border-2 bg-background"
 										key={e.application_id}>
@@ -346,17 +362,23 @@ const JobPage = () => {
 									</div>
 								))}
 							</div>
-
 							{filteredApplications.length === 0 && (
 								<p className="text-center py-8 opacity-70">
-									No application with status {filterStatus}
+									No applications with status {filterStatus}
 								</p>
 							)}
+							{totalPages > 1 && (
+								<Pagination
+									currentPage={currentPage}
+									totalPages={totalPages}
+									onPageChange={setCurrentPage}
+								/>
+							)}{" "}
 						</>
 					) : (
 						<>
 							<p className="text-center py-8 opacity-70">
-								No application Yet.
+								No applications yet.
 							</p>
 						</>
 					)}
