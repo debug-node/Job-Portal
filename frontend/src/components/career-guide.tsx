@@ -59,15 +59,15 @@ const CareerGuide = () => {
 		setLoading(true);
 		try {
 			const { data } = await axios.post(`${utils_service}/api/utils/career`, {
-				skills: skills,
+				skills,
 			});
 
 			setResponse(data);
 			toast.success("Career guidance generated");
-		} catch (error: any) {
-			toast.error(
-				error?.response?.data?.message || "Failed to generate career guidance",
-			);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to generate career guidance");
 		} finally {
 			setLoading(false);
 		}
@@ -82,9 +82,9 @@ const CareerGuide = () => {
 	return (
 		<div className="max-w-7xl mx-auto px-4 py-16">
 			<div className="text-center mb-12">
-				<div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-blue-50 dark:bg-blue-950 mb-4">
+				<div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-950/20 border border-blue-200 dark:border-blue-800 mb-4">
 					<Sparkles size={16} className="text-blue-600" />
-					<span className="text-sm font-medium">
+					<span className="text-sm font-medium text-blue-700 dark:text-blue-300">
 						AI-Powered Career Guidance
 					</span>
 				</div>
@@ -114,7 +114,7 @@ const CareerGuide = () => {
 										Tell us about your skills
 									</DialogTitle>
 									<DialogDescription>
-										Add your technical skills to recieve personalized
+										Add your technical skills to receive personalized
 										career recommendations
 									</DialogDescription>
 								</DialogHeader>
@@ -152,7 +152,7 @@ const CareerGuide = () => {
 														</span>
 														<button
 															onClick={() => removeSkill(s)}
-															className="h-5 w-5 rounded-full bg-red-500 text-white flex in-checked: justify-center">
+															className="h-5 w-5 rounded-full bg-red-500 text-white flex items-center justify-center">
 															<X size={13} />
 														</button>
 													</div>
@@ -171,7 +171,7 @@ const CareerGuide = () => {
 													size={18}
 													className="animate-spin"
 												/>{" "}
-												Analyzing Your skills...
+												Analyzing your skills...
 											</>
 										) : (
 											<>
@@ -193,7 +193,7 @@ const CareerGuide = () => {
 
 								<div className="space-y-6 py-4">
 									{/* summary */}
-									<div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-b-blue-200 dark:border-b-blue-800">
+									<div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
 										<div className="flex items-start gap-3">
 											<Lightbulb
 												className="text-blue-600 mt-1 shrink-0"
@@ -217,7 +217,7 @@ const CareerGuide = () => {
 												size={20}
 												className="text-blue-600"
 											/>
-											Recomended Career Paths
+											Recommended Career Paths
 										</h3>
 										<div className="space-y-3">
 											{response.jobOptions.map((job, index) => (
@@ -300,8 +300,8 @@ const CareerGuide = () => {
 										</div>
 									</div>
 
-									{/* Learning approch */}
-									<div className="p-4 rounded-lg border bg-blue-950/20 dark:bg-red-950/20">
+									{/* Learning approach */}
+									<div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-950/20">
 										<h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
 											<BookOpen
 												size={20}
@@ -319,12 +319,9 @@ const CareerGuide = () => {
 														<span className="text-blue-600 mt-0.5">
 															•
 														</span>
-														<span
-															className="opacity-90"
-															dangerouslySetInnerHTML={{
-																__html: point,
-															}}
-														/>
+														<span className="opacity-90">
+															{point}
+														</span>
 													</li>
 												),
 											)}
