@@ -120,10 +120,45 @@
 		@apply border-border outline-ring/50;
 	}
 	body {
-		@apply bg-background text-foreground;
+		@apply bg-background text-foreground min-h-screen;
+		background-image:
+			radial-gradient(circle at 8% 12%, rgba(37, 99, 235, 0.07) 0, transparent 28%),
+			radial-gradient(circle at 92% 88%, rgba(239, 68, 68, 0.07) 0, transparent 32%);
+	}
+
+	/* Cursor pointer for interactive elements */
+	button,
+	[role="button"],
+	a,
+	input[type="checkbox"],
+	input[type="radio"],
+	select {
+		@apply cursor-pointer;
+	}
+
+	::selection {
+		background: rgba(37, 99, 235, 0.2);
 	}
 }
 
 .icon-style {
 	@apply absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 opacity-50;
+}
+
+@layer utilities {
+	.ui-page {
+		@apply min-h-screen px-4 py-10 md:py-14;
+	}
+
+	.ui-shell {
+		@apply max-w-7xl mx-auto animate-in fade-in duration-500;
+	}
+
+	.ui-card {
+		@apply rounded-2xl border bg-card/80 backdrop-blur-sm shadow-lg;
+	}
+
+	.ui-title {
+		@apply text-3xl md:text-4xl font-bold tracking-tight;
+	}
 }
