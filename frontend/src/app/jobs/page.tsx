@@ -1,9 +1,9 @@
 "use client";
 import { Job } from "@/type";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
-import { job_service } from "@/context/AppContext";
+import { job_service, useAppData } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Briefcase, Filter, MapPin, Search, X } from "lucide-react";
 import Loading from "@/components/loading";
@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 const locations: string[] = [
 	"Delhi",
 	"Mumbai",
-	"Banglore",
+	"Bengaluru",
 	"Hyderabad",
 	"Pune",
 	"Kolkata",
@@ -31,6 +31,7 @@ const locations: string[] = [
 ];
 
 const JobsPage = () => {
+	const { user, isAuth } = useAppData();
 	const [loading, setLoading] = useState(true);
 	const [jobs, setJobs] = useState<Job[]>([]);
 	const [title, setTitle] = useState("");
@@ -39,7 +40,7 @@ const JobsPage = () => {
 	const token = Cookies.get("token");
 	const ref = useRef<HTMLButtonElement>(null);
 
-	async function fetchJobs() {
+	const fetchJobs = useCallback(async () => {
 		setLoading(true);
 		try {
 			const { data } = await axios.get(
@@ -57,11 +58,16 @@ const JobsPage = () => {
 		} finally {
 			setLoading(false);
 		}
-	}
+	}, [title, location, token]);
 
+	// Debounce search filters - wait 500ms after user stops typing before fetching
 	useEffect(() => {
-		fetchJobs();
-	}, [title, location]);
+		const debounceTimer = setTimeout(() => {
+			fetchJobs();
+		}, 500);
+
+		return () => clearTimeout(debounceTimer);
+	}, [title, location, fetchJobs]);
 
 	const clickEvent = () => {
 		ref.current?.click();
@@ -75,21 +81,31 @@ const JobsPage = () => {
 	};
 
 	const hasActiveFilters = title || location;
+	const roleSubtext =
+		isAuth && user?.role === "recruiter"
+			? "Open a job to review applications for your own listings."
+			: "Find jobs that match your profile and apply in one click.";
+
 	return (
 		<div className="min-h-screen bg-secondary/30">
 			<div className="max-w-7xl mx-auto px-4 py-8">
 				{/* Header Section */}
-				<div className="mb-8">
+				<div className="mb-8 rounded-2xl border bg-card/70 backdrop-blur-sm p-5 md:p-7 shadow-sm">
 					<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 						<div>
-							<h1 className="text-3xl md:text-4xl font-bold mb-2">
+							<h1 className="text-3xl md:text-4xl font-bold mb-2 tracking-tight">
 								Explore{" "}
-								<span className="text-red-500">Oppertunities</span>
+								<span className="text-blue-600">Opportunities</span>
 							</h1>
-							<p className="text-base opacity-70">{jobs.length} jobs</p>
+							<p className="text-base opacity-70">
+								{jobs.length} jobs available
+							</p>
+							<p className="text-sm opacity-60 mt-1">{roleSubtext}</p>
 						</div>
 
-						<Button className="gap-2 h-11" onClick={clickEvent}>
+						<Button
+							className="gap-2 h-11 shadow-md shadow-blue-500/15"
+							onClick={clickEvent}>
 							<Filter size={18} /> Filters
 							{hasActiveFilters && (
 								<span className="ml-1 px-2 py-0.5 rounded-full bg-red-500 text-white text-xs">
@@ -133,7 +149,7 @@ const JobsPage = () => {
 					) : (
 						<>
 							{jobs && jobs.length > 0 ? (
-								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+								<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-2 mt-6">
 									{jobs.map((job) => (
 										<JobCard job={job} key={job.job_id} />
 									))}
@@ -194,7 +210,7 @@ const JobsPage = () => {
 									id="location"
 									value={location}
 									onChange={(e) => setLocation(e.target.value)}
-									className="w-full h-11 px-3 border-2 border-gray-300 rounded-md bg-transparent focus:outline-none focus:ring2">
+									className="w-full h-11 px-3 border-2 border-gray-300 rounded-md bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/30">
 									<option value="">All Locations</option>
 									{locations.map((e) => (
 										<option value={e} key={e}>
