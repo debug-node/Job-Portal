@@ -3,7 +3,7 @@ import { user_service } from "@/context/AppContext";
 import { User } from "@/type";
 import axios from "axios";
 import { useParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Cookies from "js-cookie";
 import Loading from "@/components/loading";
 import Info from "../components/info";
@@ -15,7 +15,7 @@ const UserAccount = () => {
 
 	const { id } = useParams();
 
-	async function fetchUser() {
+	const fetchUser = useCallback(async () => {
 		const token = Cookies.get("token");
 		try {
 			const { data } = await axios.get(`${user_service}/api/user/${id}`, {
@@ -30,11 +30,11 @@ const UserAccount = () => {
 		} finally {
 			setLoading(false);
 		}
-	}
+	}, [id]);
 
 	useEffect(() => {
 		fetchUser();
-	}, [id]);
+	}, [fetchUser]);
 
 	if (loading) return <Loading />;
 	return (
