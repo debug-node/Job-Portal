@@ -73,9 +73,10 @@ const ResumeAnalyzer = () => {
 			);
 			setResponse(data);
 			toast.success("Resume analyzed successfully!");
-		} catch (error: any) {
-			toast.error(error.response?.data?.message || "Failed to analyze resume");
-			console.log(error);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to analyze resume");
 		} finally {
 			setLoading(false);
 		}
@@ -113,15 +114,17 @@ const ResumeAnalyzer = () => {
 	return (
 		<div className="max-w-7xl mx-auto px-4 py-16 bg-secondary/30">
 			<div className="text-center mb-12">
-				<div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border bg-red-50 dark:bg-red-950/30 mb-4">
-					<FileCheck size={16} className="text-red-500" />
-					<span className="text-sm font-medium">AI-Powered ATS Analysis</span>
+				<div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-linear-to-r from-red-100 to-red-50 dark:from-red-900/30 dark:to-red-950/20 border border-red-200 dark:border-red-800 mb-4">
+					<FileCheck size={16} className="text-red-600" />
+					<span className="text-sm font-medium text-red-700 dark:text-red-300">
+						AI-Powered ATS Analysis
+					</span>
 				</div>
 				<h2 className="text-3xl md:text-4xl font-bold mb-4">
 					Optimize Your Resume for ATS
 				</h2>
 				<p className="text-lg opacity-70 max-w-2xl mx-auto mb-8">
-					Get instant feedback on your resume's compatibility with Applicant
+					Get instant feedback on your resume compatibility with Applicant
 					Tracking Systems
 				</p>
 
@@ -151,9 +154,9 @@ const ResumeAnalyzer = () => {
 								<div className="space-y-4 py-4">
 									<div
 										onClick={() => fileInputRef.current?.click()}
-										className="border-2 border-dashed rounded-lg p-12 text-center cursor pointer hover:border-blue-500 transition-colors">
+										className="border-2 border-dashed rounded-lg p-12 text-center cursor-pointer hover:border-blue-500 transition-colors">
 										<div className="flex flex-col items-center gap-4">
-											<div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue 900/30 flex items-center justify-center">
+											<div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
 												<Upload
 													size={32}
 													className="text-blue-600"
@@ -223,7 +226,7 @@ const ResumeAnalyzer = () => {
 									<div
 										className={`p-6 rounded-lg ${getScoreBgColor(
 											response.atsScore,
-										)} border-2`}>
+										)} border-2 shadow-sm`}>
 										<div className="text-center">
 											<p className="text-sm font-medium opacity-70 mb-2">
 												ATS Compatibility Score
