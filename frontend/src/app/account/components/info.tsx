@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppData } from "@/context/AppContext";
-import { AccontProps } from "@/type";
+import { AccountProps } from "@/type";
 import {
 	AlertTriangle,
 	Briefcase,
@@ -27,10 +27,12 @@ import {
 	UserIcon,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React, { ChangeEvent, useRef, useState } from "react";
+import React, { ChangeEvent, useRef, useState, useMemo } from "react";
+import { toast } from "sonner";
 
-const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
+const Info: React.FC<AccountProps> = ({ user, isYourAccount }) => {
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	const editRef = useRef<HTMLButtonElement | null>(null);
 	const resumeRef = useRef<HTMLInputElement | null>(null);
@@ -38,6 +40,14 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 	const [name, setName] = useState("");
 	const [phoneNumber, setPhoneNumber] = useState("");
 	const [bio, setBio] = useState("");
+
+	// Memoized subscription status calculation - avoids setState in effect
+	// Get current time once, then use in memoized calculation
+	const currentTime = new Date().getTime();
+	const isSubscriptionActive = useMemo(() => {
+		if (!user.subscription) return false;
+		return new Date(user.subscription).getTime() > currentTime;
+	}, [user.subscription, currentTime]);
 
 	const { updateProfilePic, updateResume, btnLoading, updateUser } = useAppData();
 
@@ -73,7 +83,7 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 		const file = e.target.files?.[0];
 		if (file) {
 			if (file.type !== "application/pdf") {
-				alert("Please upload a pdf file");
+				toast.error("Please upload a PDF file");
 				return;
 			}
 
@@ -91,13 +101,15 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 				<div className="h-32 bg-blue-500 relative">
 					<div className="absolute -bottom-16 left-8">
 						<div className="relative group">
-							<div className="w-32 h-32 rounded-full border-4 border-background overflow-hidden shadow-xl bg-background">
-								<img
+							<div className="w-32 h-32 rounded-full border-4 border-background overflow-hidden shadow-xl bg-background relative">
+								<Image
 									src={
 										user.profile_pic ? user.profile_pic : "/user.png"
 									}
-									alt=""
-									className="w-full h-full object-cover"
+									alt={`${user.name} profile picture`}
+									fill
+									className="object-cover"
+									sizes="128px"
 								/>
 							</div>
 
@@ -168,24 +180,24 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 							Contact Information
 						</h2>
 						<div className="grid md:grid-cols-2 gap-4">
-							<div className="flex items-center gap-3 p-4 rounded-lg border hover:border-blue-500 transition-colors">
-								<div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+							<div className="flex items-center gap-3 p-4 rounded-lg border-2 border-blue-100 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 transition-colors bg-background hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+								<div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
 									<Mail size={18} className="text-blue-600" />
 								</div>
 								<div className="flex-1 min-w-0">
-									<p className="text-xs opacity-70 font-medium">
+									<p className="text-xs opacity-70 font-medium text-blue-700 dark:text-blue-300">
 										Email
 									</p>
 									<p className="text-sm truncate">{user.email}</p>
 								</div>
 							</div>
 
-							<div className="flex items-center gap-3 p-4 rounded-lg border hover:border-blue-500 transition-colors">
-								<div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+							<div className="flex items-center gap-3 p-4 rounded-lg border-2 border-blue-100 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 transition-colors bg-background hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+								<div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
 									<Phone size={18} className="text-blue-600" />
 								</div>
 								<div className="flex-1 min-w-0">
-									<p className="text-xs opacity-70 font-medium">
+									<p className="text-xs opacity-70 font-medium text-blue-700 dark:text-blue-300">
 										Phone
 									</p>
 									<p className="text-sm truncate">
@@ -204,11 +216,11 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 								Resume
 							</h2>
 
-							<div className="flex items-center gap-3 p-4 rounded-lg border hover:border-blue-500 transition-colors">
-								<div className="h-12 w-12 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
-									<NotepadText size={20} className="text-red-600" />
+							<div className="flex items-center gap-3 p-5 rounded-lg border-2 border-blue-100 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 transition-all bg-background hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+								<div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+									<NotepadText size={20} className="text-blue-600" />
 								</div>
-								<div className="flex-1">
+								<div className="flex-1 min-w-0">
 									<p className="text-sm font-medium">Resume Document</p>
 									<Link
 										href={user.resume}
@@ -217,22 +229,25 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 										View Resume PDF
 									</Link>
 								</div>
-								{/* edit button */}
-
-								<Button
-									variant={"outline"}
-									size={"sm"}
-									onClick={handleResumeClick}
-									className="gap-2">
-									Update
-								</Button>
-								<input
-									type="file"
-									ref={resumeRef}
-									className="hidden"
-									accept="application/pdf"
-									onChange={changeResume}
-								/>
+								{/* edit button - show only if viewing own profile */}
+								{isYourAccount && (
+									<>
+										<Button
+											variant={"outline"}
+											size={"sm"}
+											onClick={handleResumeClick}
+											className="gap-2 shrink-0">
+											Update
+										</Button>
+										<input
+											type="file"
+											ref={resumeRef}
+											className="hidden"
+											accept="application/pdf"
+											onChange={changeResume}
+										/>
+									</>
+								)}
 							</div>
 						</div>
 					)}
@@ -270,8 +285,7 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 													</Button>
 												</div>
 											</>
-										) : new Date(user.subscription).getTime() >
-										  Date.now() ? (
+										) : isSubscriptionActive ? (
 											<div className="flex items-center justify-between flex-wrap gap-4">
 												<div>
 													<div className="flex items-center gap-2 mb-2">
@@ -296,7 +310,7 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 												</div>
 												<div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-700 text-white font-medium">
 													<CheckCircle2 size={18} />
-													Subcribed
+													Subscribed
 												</div>
 											</div>
 										) : (
@@ -388,8 +402,8 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 
 							<Input
 								id="phone"
-								type="number"
-								placeholder="Enter your Phone Number"
+								type="tel"
+								placeholder="Enter your phone number"
 								className="h-11"
 								value={phoneNumber}
 								onChange={(e) => setPhoneNumber(e.target.value)}
@@ -407,7 +421,7 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 								<Input
 									id="bio"
 									type="text"
-									placeholder="Enter your Bio"
+									placeholder="Write a short professional bio"
 									className="h-11"
 									value={bio}
 									onChange={(e) => setBio(e.target.value)}
@@ -421,7 +435,7 @@ const Info: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 								onClick={updateProfileHandler}
 								className="w-full h-11"
 								type="submit">
-								{btnLoading ? "Saving Changes..." : "Save changes"}
+								{btnLoading ? "Saving changes..." : "Save changes"}
 							</Button>
 						</DialogFooter>
 					</div>
