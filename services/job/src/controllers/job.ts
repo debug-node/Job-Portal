@@ -352,7 +352,7 @@ export const updateApplication = TryCatch(async (req: AuthenticatedRequest, res)
 	const message = {
 		to: application.applicant_email,
 		subject: "Application Update - Hireheaven",
-		html: applicationStatusUpdateTemplate(job.title),
+		html: applicationStatusUpdateTemplate(job.title, updatedApplication.status),
 	};
 
 	publishToTopic("send-mail", message).catch((error) => {
