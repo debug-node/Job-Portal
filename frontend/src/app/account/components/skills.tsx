@@ -3,17 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAppData } from "@/context/AppContext";
-import { AccontProps } from "@/type";
+import { AccountProps } from "@/type";
 import { Award, Plus, Sparkle, X } from "lucide-react";
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 
-const Skills: React.FC<AccontProps> = ({ user, isYourAccount }) => {
+const Skills: React.FC<AccountProps> = ({ user, isYourAccount }) => {
 	const { addSkill, btnLoading, removeSkill } = useAppData();
 	const [skill, setSkill] = useState("");
 
 	const addSkillHandler = () => {
 		if (!skill.trim()) {
-			alert("Please enter a skill");
+			toast.error("Please enter a skill");
 			return;
 		}
 		addSkill(skill, setSkill);
@@ -51,27 +52,29 @@ const Skills: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 
 				{/* Add Skills Input */}
 				{isYourAccount && (
-					<div className="flex gap-3 flex-col sm:flex-row">
-						<div className="relative flex-1">
-							<Sparkle
-								size={18}
-								className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50"
-							/>
-							<Input
-								type="text"
-								placeholder="e.g. React, Node.js, Python..."
-								className="h-11 pl-10 bg-background"
-								value={skill}
-								onChange={(e) => setSkill(e.target.value)}
-								onKeyPress={handleKeyPress}
-							/>
+					<div className="p-6 border-b bg-background/40">
+						<div className="flex gap-3 flex-col sm:flex-row">
+							<div className="relative flex-1">
+								<Sparkle
+									size={18}
+									className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50"
+								/>
+								<Input
+									type="text"
+									placeholder="e.g. React, Node.js, Python..."
+									className="h-11 pl-10 bg-background"
+									value={skill}
+									onChange={(e) => setSkill(e.target.value)}
+									onKeyPress={handleKeyPress}
+								/>
+							</div>
+							<Button
+								onClick={addSkillHandler}
+								className="h-11 gap-2 px-6"
+								disabled={!skill.trim() || btnLoading}>
+								<Plus size={18} /> Add Skill
+							</Button>
 						</div>
-						<Button
-							onClick={addSkillHandler}
-							className="h-11 gap-2 px-6"
-							disabled={!skill.trim() || btnLoading}>
-							<Plus size={18} /> Add Skills
-						</Button>
 					</div>
 				)}
 
@@ -103,8 +106,8 @@ const Skills: React.FC<AccontProps> = ({ user, isYourAccount }) => {
 								</div>
 								<CardDescription className="text-base">
 									{isYourAccount
-										? "No Skill Added Yet. Start Building Your profile!"
-										: "No Skills Added by user"}
+										? "No skills added yet. Start building your profile!"
+										: "No skills added by this user"}
 								</CardDescription>
 							</div>
 						</>
