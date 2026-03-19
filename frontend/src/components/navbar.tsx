@@ -11,7 +11,8 @@ import { useAppData } from "@/context/AppContext";
 const NavBar = () => {
 	const [isOpen, setIsOpen] = useState(false);
 
-	const { isAuth, user, setIsAuth, setUser, loading, logoutUser } = useAppData();
+	const { isAuth, user, loading, logoutUser } = useAppData();
+	const roleLabel = user?.role === "recruiter" ? "Recruiter" : "Job Seeker";
 
 	const toggleMenu = () => {
 		setIsOpen(!isOpen);
@@ -26,8 +27,8 @@ const NavBar = () => {
 				<div className="flex justify-between items-center h-16">
 					<div className="flex items-center">
 						<Link href={"/"} className="flex items-center gap-1 group">
-							<div className="text-2xl font-bold tracking-tight">
-								<span className="bg-linear-to-r from bg-blue-600 to-blue-800 bg-clip-text text-transparent">
+							<div className="text-2xl font-bold tracking-tight leading-none">
+								<span className="text-blue-600 dark:text-blue-400">
 									Hire
 								</span>
 								<span className="text-red-500">Heaven</span>
@@ -60,6 +61,30 @@ const NavBar = () => {
 								<Info size={16} /> About
 							</Button>
 						</Link>
+
+						{isAuth && (
+							<>
+								{user?.role === "recruiter" ? (
+									<Link href={"/account"}>
+										<Button
+											variant={"ghost"}
+											className="flex items-center gap-2 font-medium">
+											<User size={16} />
+											Recruiter Desk
+										</Button>
+									</Link>
+								) : (
+									<Link href={"/applications"}>
+										<Button
+											variant={"ghost"}
+											className="flex items-center gap-2 font-medium">
+											<Briefcase size={16} />
+											My Applications
+										</Button>
+									</Link>
+								)}
+							</>
+						)}
 					</div>
 
 					{/* Right side Actions */}
@@ -94,6 +119,9 @@ const NavBar = () => {
 											<div className="px-3 py-2 mb-2 border-b">
 												<p className="text-sm font-semibold">
 													{user && user.name}
+												</p>
+												<p className="text-xs text-blue-600 mt-0.5">
+													{roleLabel}
 												</p>
 												<p className="text-xs opacity-60 truncate">
 													{user && user.email}
@@ -177,13 +205,25 @@ const NavBar = () => {
 
 					{isAuth ? (
 						<>
-							<Link href={"/about"} onClick={toggleMenu}>
-								<Button
-									variant={"ghost"}
-									className="w-full justify-start gap-3 h-11">
-									<User size={18} /> My Profile
-								</Button>
-							</Link>
+							{user?.role === "recruiter" ? (
+								<Link href={"/account"} onClick={toggleMenu}>
+									<Button
+										variant={"ghost"}
+										className="w-full justify-start gap-3 h-11">
+										<User size={18} />
+										Recruiter Desk
+									</Button>
+								</Link>
+							) : (
+								<Link href={"/applications"} onClick={toggleMenu}>
+									<Button
+										variant={"ghost"}
+										className="w-full justify-start gap-3 h-11">
+										<Briefcase size={18} />
+										My Applications
+									</Button>
+								</Link>
+							)}
 							<Button
 								variant={"destructive"}
 								className="w-full justify-start gap-3 h-11"
@@ -197,7 +237,7 @@ const NavBar = () => {
 					) : (
 						<Link href={"/login"} onClick={toggleMenu}>
 							<Button className="w-full justify-start gap-3 h-11 mt-2">
-								<User size={18} /> SignIn
+								<User size={18} /> Sign In
 							</Button>
 						</Link>
 					)}
