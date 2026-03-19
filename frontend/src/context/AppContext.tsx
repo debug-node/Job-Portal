@@ -40,7 +40,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 		}
 	}
 
-	async function updateProfilePic(fromData: any) {
+	async function updateProfilePic(fromData: FormData) {
 		setLoading(true);
 		try {
 			const { data } = await axios.put(
@@ -55,14 +55,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
 			toast.success(data.message);
 			fetchUser();
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to update profile picture");
 		} finally {
 			setLoading(false);
 		}
 	}
 
-	async function updateResume(fromData: any) {
+	async function updateResume(fromData: FormData) {
 		setLoading(true);
 		try {
 			const { data } = await axios.put(
@@ -77,8 +79,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
 			toast.success(data.message);
 			fetchUser();
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to update resume");
 		} finally {
 			setLoading(false);
 		}
@@ -98,8 +102,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 			);
 			toast.success(data.message);
 			fetchUser();
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to update profile");
 		} finally {
 			setBtnLoading(false);
 		}
@@ -130,8 +136,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 			toast.success(data.message);
 			setSkill("");
 			fetchUser();
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to add skill");
 		} finally {
 			setBtnLoading(false);
 		}
@@ -150,12 +158,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 			);
 			toast.success(data.message);
 			fetchUser();
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to remove skill");
 		}
 	}
 
 	async function applyJob(job_id: number) {
+		if (!user || user.role !== "jobseeker") {
+			toast.error("Only job seekers can apply for jobs");
+			return;
+		}
+
 		setBtnLoading(true);
 		try {
 			const { data } = await axios.post(
@@ -170,24 +185,35 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
 			toast.success(data.message);
 			fetchApplications();
-		} catch (error: any) {
-			toast.error(error.response.data.message);
+		} catch (error: unknown) {
+			const axiosError = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message;
+			toast.error(axiosError || "Failed to apply for job");
 		} finally {
 			setBtnLoading(false);
 		}
 	}
 
 	const [applications, setApplications] = useState<Application[]>([]);
+	const [applicationPage, setApplicationPage] = useState(1);
+	const applicationsPerPage = 10; // Load 10 applications per page
 
-	async function fetchApplications() {
+	async function fetchApplications(page?: number) {
 		try {
-			const { data } = await axios.get(`${user_service}/api/user/application/all`, {
-				headers: {
-					Authorization: `Bearer ${token}`,
+			const pageNum = page || applicationPage;
+			const skip = (pageNum - 1) * applicationsPerPage;
+
+			const { data } = await axios.get(
+				`${user_service}/api/user/application/all?skip=${skip}&limit=${applicationsPerPage}`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
 				},
-			});
+			);
 
 			setApplications(data);
+			setApplicationPage(pageNum);
 		} catch (error) {
 			console.log(error);
 		}
@@ -196,6 +222,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 	useEffect(() => {
 		fetchUser();
 		fetchApplications();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return (
