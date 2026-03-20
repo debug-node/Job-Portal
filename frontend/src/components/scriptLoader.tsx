@@ -20,6 +20,7 @@ const useRazorpay = () => {
 		}
 		return false;
 	});
+	const [error, setError] = useState<string | null>(null);
 	const scriptRef = useRef<boolean>(false);
 
 	useEffect(() => {
@@ -39,11 +40,24 @@ const useRazorpay = () => {
 		const script = document.createElement("script");
 		script.src = "https://checkout.razorpay.com/v1/checkout.js";
 		script.async = true;
-		script.onload = () => setLoaded(true);
+
+		script.onload = () => {
+			setLoaded(true);
+			setError(null);
+		};
+
+		script.onerror = () => {
+			const errorMsg = "❌ Failed to load Razorpay script";
+			setError(errorMsg);
+			console.error(errorMsg);
+			scriptRef.current = false; // Reset so it can retry
+			document.body.removeChild(script); // ✅ Clean up failed script from DOM
+		};
+
 		document.body.appendChild(script);
 	}, [loaded]);
 
-	return loaded;
+	return { loaded, error };
 };
 
 export default useRazorpay;
