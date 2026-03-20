@@ -759,6 +759,40 @@
 
 ---
 
+## Day 37 — Payment Service Integration + Auth/Frontend Hardening
+**Goal:** Subscription payment flow ko backend service level par introduce karna aur related auth/frontend reliability improve karna.
+
+**Highlights**
+- New `services/payment` microservice scaffold and runtime setup add hua.  
+  [services/payment/package.json](services/payment/package.json)  
+  [services/payment/tsconfig.json](services/payment/tsconfig.json)  
+  [services/payment/src/index.ts](services/payment/src/index.ts)
+- Razorpay instance configuration with env-based credentials add ki gayi.  
+  [services/payment/src/index.ts](services/payment/src/index.ts)
+- Payment controller me checkout and payment verification handlers implement hue.  
+  [services/payment/src/controllers/payment.ts](services/payment/src/controllers/payment.ts)
+  - `checkOut()` prevents duplicate active subscription and creates Razorpay order
+  - `paymentVerification()` validates signature and extends subscription by 30 days
+- Payment routes add hue with protected endpoints.  
+  [services/payment/src/routes/payment.ts](services/payment/src/routes/payment.ts)
+  - `POST /checkout`
+  - `POST /verify`
+- Payment auth middleware add hua for token-based user context resolution.  
+  [services/payment/src/middlewares/auth.ts](services/payment/src/middlewares/auth.ts)
+- Frontend subscribe page me Razorpay key hardcoded value se env-driven value par shift ki gayi.  
+  [frontend/src/app/subscribe/page.tsx](frontend/src/app/subscribe/page.tsx)
+- Razorpay script loader me failure state/error handling add hua.  
+  [frontend/src/components/scriptLoader.tsx](frontend/src/components/scriptLoader.tsx)
+- User service auth middleware me missing/empty token guard aur structured error logging improve kiya gaya.  
+  [services/user/src/middleware/auth.ts](services/user/src/middleware/auth.ts)
+
+**Key Flows**
+- **Checkout Flow**: Authenticated user -> subscription validity check -> Razorpay order creation.
+- **Verification Flow**: Razorpay callback payload -> HMAC signature verification -> user subscription expiry update.
+- **Frontend Payment Init Flow**: Env Razorpay key resolve -> script load success/failure handling -> checkout open.
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
@@ -811,6 +845,14 @@ Source: [services/user/src/routes/user.ts](services/user/src/routes/user.ts)
 
 Source: [services/job/src/routes/job.ts](services/job/src/routes/job.ts)
 
+### Payment Service (Base: `/api/payment`)
+| Method | Endpoint | Description | Body/Params | Notes |
+| --- | --- | --- | --- | --- |
+| POST | /checkout | Create Razorpay order | Header | Auth required, blocks duplicate active subscription |
+| POST | /verify | Verify Razorpay payment and activate subscription | JSON + Header | Auth required, validates `razorpay_signature` |
+
+Source: [services/payment/src/routes/payment.ts](services/payment/src/routes/payment.ts)
+
 ---
 
 ## Setup/Run Steps
@@ -859,6 +901,14 @@ Source: [services/user/package.json](services/user/package.json)
 
 **Scripts**: `npm run build`, `npm run start`, `npm run dev`  
 Source: [services/job/package.json](services/job/package.json)
+
+### Payment Service
+1. Create .env using [services/payment/.env.example](services/payment/.env.example).
+2. Install dependencies.
+3. Build and start.
+
+**Scripts**: `npm run build`, `npm run start`, `npm run dev`  
+Source: [services/payment/package.json](services/payment/package.json)
 
 ---
 
@@ -967,6 +1017,17 @@ Source: [services/job/.env.example](services/job/.env.example)
 | `UPLOAD_SERVICE` | Utils service base URL (for company logo upload) |
 | `JWT_SEC` | JWT secret key |
 | `KAFKA_BROKER` | Kafka broker address |
+
+### Payment Service
+Source: [services/payment/.env.example](services/payment/.env.example)
+
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | Payment service port |
+| `Razorpay_Key` | Razorpay key ID |
+| `Razorpay_Secret` | Razorpay key secret |
+| `DB_URL` | Neon/Postgres connection string |
+| `JWT_SEC` | JWT secret key |
 
 ---
 
