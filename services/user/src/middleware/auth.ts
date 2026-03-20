@@ -38,6 +38,13 @@ export const isAuth = async (
 
 		const token = authHeader.split(" ")[1];
 
+		if (!token || token.trim() === "") {
+			res.status(401).json({
+				message: "Token is missing",
+			});
+			return;
+		}
+
 		const decodedPayload = jwt.verify(
 			token,
 			process.env.JWT_SEC as string,
@@ -85,7 +92,15 @@ export const isAuth = async (
 
 		next();
 	} catch (error) {
-		console.log(error);
+		const errorMsg = error instanceof Error ? error.message : "Unknown error";
+		
+		// Only log JWT verification errors during development
+		if (errorMsg.includes("jwt")) {
+			console.warn(`[Auth] JWT Error: ${errorMsg}`);
+		} else {
+			console.error("[Auth] Error:", error);
+		}
+		
 		res.status(401).json({
 			message: "Authentication failed. Please login again.",
 		});
