@@ -41,13 +41,12 @@ const Info: React.FC<AccountProps> = ({ user, isYourAccount }) => {
 	const [phoneNumber, setPhoneNumber] = useState("");
 	const [bio, setBio] = useState("");
 
-	// Memoized subscription status calculation - avoids setState in effect
-	// Get current time once, then use in memoized calculation
-	const currentTime = new Date().getTime();
+	// Memoized subscription status calculation
+	// Only recalculates when user.subscription changes (more efficient)
 	const isSubscriptionActive = useMemo(() => {
 		if (!user.subscription) return false;
-		return new Date(user.subscription).getTime() > currentTime;
-	}, [user.subscription, currentTime]);
+		return new Date(user.subscription).getTime() > Date.now();
+	}, [user.subscription]);
 
 	const { updateProfilePic, updateResume, btnLoading, updateUser } = useAppData();
 
