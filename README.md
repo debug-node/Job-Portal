@@ -10,6 +10,7 @@ Job Portal is a modern job marketplace platform with a microservices architectur
 - **User Service**: User profile management and protected profile endpoint
 - **Utils Service**: Shared utilities including email notifications, file uploads, and AI-based career/resume analysis
 - **Job Service**: Company and job management for recruiters and public job listings
+- **Payment Service**: Subscription checkout and Razorpay payment verification with JWT-protected endpoints
 - **Frontend**: Next.js 16 + React 19 client-side application with shadcn/ui, Tailwind CSS v4, and dark mode support
    - Auth flows, jobs browsing, company profile, account dashboard, subscribe/payment success journey
    - Shared React context and centralized app-level type definitions
@@ -30,6 +31,7 @@ Job Portal is a modern job marketplace platform with a microservices architectur
 - **Password Hashing**: bcrypt
 - **File Handling**: Multer
 - **AI**: Google Gemini API (`@google/genai`)
+- **Payments**: Razorpay
 
 **Frontend:**
 - **Framework**: Next.js 16.1.6 + React 19.2.3
@@ -135,6 +137,22 @@ Job-Portal/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
+│   ├── payment/             # Payment service
+│   │   ├── src/
+│   │   │   ├── index.ts
+│   │   │   ├── controllers/
+│   │   │   │   └── payment.ts
+│   │   │   ├── middlewares/
+│   │   │   │   └── auth.ts
+│   │   │   ├── routes/
+│   │   │   │   └── payment.ts
+│   │   │   └── utils/
+│   │   │       ├── db.ts
+│   │   │       ├── errorHandler.ts
+│   │   │       └── TryCatch.ts
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
 │   └── package.json (if applicable)
 │
 ├── daily-documentation.md   # Development progress tracking
@@ -152,6 +170,7 @@ Job-Portal/
 - Apache Kafka
 - Cloudinary account
 - Email service credentials
+- Razorpay account (Key ID + Secret)
 
 ### Installation
 
@@ -191,7 +210,13 @@ Job-Portal/
    npm install
    ```
 
-7. **Setup Environment Variables**
+7. **Install Payment Service**
+   ```bash
+   cd services/payment
+   npm install
+   ```
+
+8. **Setup Environment Variables**
    
    Create `.env` files in each service directory:
    
@@ -231,6 +256,15 @@ Job-Portal/
    KAFKA_BROKER=localhost:9092
    ```
 
+   **services/payment/.env**
+   ```
+   PORT=5004
+   Razorpay_Key=your_razorpay_key
+   Razorpay_Secret=your_razorpay_secret
+   DB_URL=postgresql://...
+   JWT_SEC=your_jwt_secret
+   ```
+
 ### Running Services
 
 **Development Mode:**
@@ -265,6 +299,12 @@ cd services/job
 npm run dev
 ```
 
+Payment Service:
+```bash
+cd services/payment
+npm run dev
+```
+
 **Production Build:**
 
 Run these inside the specific project you want to build, for example:
@@ -282,6 +322,8 @@ npm start
 - Auth service now uses the normalized upload endpoint path: `/api/utils/upload`.
 - Job service endpoint `GET /api/job/company/:id` is public (no auth required).
 - Auth service dependencies updated with `cors` and `@types/cors`.
+- User auth middleware updated with empty-token guard and improved JWT error logging.
+- New payment service added with Razorpay checkout and verification endpoints.
 
 ### Recent Frontend Updates
 - Core route coverage completed:
@@ -300,6 +342,8 @@ npm start
    - card, dialog, input, label, select
 - Branding/static assets integrated for polished UI surfaces:
    - hero, about, and user profile images
+- Subscription page now uses env-driven Razorpay key (`NEXT_PUBLIC_RAZORPAY_KEY`).
+- Razorpay script loader improved with explicit error handling/retry-safe behavior.
 
 ### Frontend Performance Optimizations
 - Image rendering optimized with Next.js `Image` and lazy loading in list-heavy UI.
@@ -348,6 +392,12 @@ npm start
 - Recruiter-side application listing per job
 - Recruiter-side application status updates with email notification trigger
 
+### Payment Service
+- JWT-protected payment endpoints
+- Razorpay order creation for subscription checkout
+- Signature verification for payment authenticity
+- Subscription expiry update (30-day extension) on successful verification
+
 ### Database
 - PostgreSQL with Neon serverless
 - Tables: `users`, `skills`, `user_skills`, `companies`, `jobs`, `applications`
@@ -394,12 +444,17 @@ npm start
 - `PUT /application/update/:id` - Update application status (recruiter-only)
 - `GET /:jobId` - Get single job (public)
 
+### Payment Routes (`/api/payment`)
+- `POST /checkout` - Create Razorpay order for authenticated user
+- `POST /verify` - Verify Razorpay signature and activate/extend subscription
+
 ## 🔄 Service Communication
 
 The microservices communicate via:
 - **Kafka**: Async event-driven messaging (e.g., send-mail events from auth and job services)
 - **HTTP/REST**: Synchronous service-to-service calls via Axios
 - **External AI API**: Utils service calls Gemini for career and ATS analysis
+- **Payment Gateway API**: Payment service integrates with Razorpay for checkout and verification
 - **Redis**: Caching and temporary token storage
 
 ## 📚 Documentation
@@ -433,6 +488,12 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - `npm test` - Run tests
 
 **Job Service:**
+- `npm run dev` - Start in development mode
+- `npm run build` - Compile TypeScript
+- `npm start` - Run compiled server
+- `npm test` - Run tests
+
+**Payment Service:**
 - `npm run dev` - Start in development mode
 - `npm run build` - Compile TypeScript
 - `npm start` - Run compiled server
@@ -487,12 +548,20 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - Neon Serverless - Database connector
 - CORS 2.8.6 - Cross-Origin Resource Sharing
 
+### Payment Service
+- Express 5.2.1 - Web framework
+- Razorpay 2.9.6 - Payment gateway SDK
+- jsonwebtoken 9.0.3 - JWT token validation
+- Neon Serverless - Database connector
+- CORS 2.8.6 - Cross-Origin Resource Sharing
+
 ## 🚧 Development Status
 
 - ✅ Auth Service - In Development
 - ✅ User Service - In Development
 - ✅ Utils Service - In Development
 - ✅ Job Service - In Development
+- ✅ Payment Service - In Development
 - ✅ Frontend - In Development
 
 ## 🧭 Frontend Route Coverage
