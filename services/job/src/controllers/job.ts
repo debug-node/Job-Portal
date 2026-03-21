@@ -355,7 +355,7 @@ export const updateApplication = TryCatch(async (req: AuthenticatedRequest, res)
 		html: applicationStatusUpdateTemplate(job.title, updatedApplication.status),
 	};
 
-	publishToTopic("send-mail", message).catch((error) => {
+	publishToTopic(message).catch((error) => {
 		console.error("Failed to publish message to Kafka topic:", error);
 	});
 
