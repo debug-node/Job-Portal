@@ -793,6 +793,40 @@
 
 ---
 
+## Day 38 — Dockerization + Compose Orchestration
+**Goal:** Project ko containerized local stack me run/deploy karne ke liye complete Docker setup add karna.
+
+**Highlights**
+- Root-level Docker Compose orchestration add hui for full stack startup.  
+  [docker-compose.yml](docker-compose.yml)
+  - Infra services: PostgreSQL, Redis, Zookeeper, Kafka
+  - App services: frontend, auth-service, user-service, job-service, utils-service, payment-service
+  - Health checks + `depends_on` conditions for startup order
+- Centralized docker env template add hua for all services and infra config.  
+  [.env.docker.example](.env.docker.example)
+- Frontend multi-stage Dockerfile add hua for Next.js build + runtime image.  
+  [frontend/Dockerfile](frontend/Dockerfile)
+- Backend services ke liye multi-stage Dockerfiles add hue (`build` + production runtime):  
+  [services/auth/Dockerfile](services/auth/Dockerfile)  
+  [services/user/Dockerfile](services/user/Dockerfile)  
+  [services/job/Dockerfile](services/job/Dockerfile)  
+  [services/utils/Dockerfile](services/utils/Dockerfile)  
+  [services/payment/Dockerfile](services/payment/Dockerfile)
+- Build-context size optimize karne ke liye docker ignore files add ki gayi.  
+  [frontend/.dockerignore](frontend/.dockerignore)  
+  [services/auth/.dockerignore](services/auth/.dockerignore)  
+  [services/user/.dockerignore](services/user/.dockerignore)  
+  [services/job/.dockerignore](services/job/.dockerignore)  
+  [services/utils/.dockerignore](services/utils/.dockerignore)  
+  [services/payment/.dockerignore](services/payment/.dockerignore)
+
+**Key Flows**
+- **Compose Boot Flow**: `docker compose up --build` -> infra healthcheck pass -> service containers start.
+- **Container Runtime Flow**: Service image build -> compiled output/run command -> exposed port mapping.
+- **Env-driven Deployment Flow**: `.env.docker` values -> compose environment injection -> consistent local stack behavior.
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)

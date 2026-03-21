@@ -315,6 +315,43 @@ npm run build
 npm start
 ```
 
+### Docker Setup (Full Stack)
+
+1. Create docker env file from template:
+```bash
+cp .env.docker.example .env.docker
+```
+
+2. Start all services with build:
+```bash
+docker compose --env-file .env.docker up --build
+```
+
+3. Start in background:
+```bash
+docker compose --env-file .env.docker up -d
+```
+
+4. Stop stack:
+```bash
+docker compose down
+```
+
+5. Reset stack with volumes:
+```bash
+docker compose down -v
+```
+
+Docker/Compose files:
+- [docker-compose.yml](docker-compose.yml)
+- [.env.docker.example](.env.docker.example)
+- [frontend/Dockerfile](frontend/Dockerfile)
+- [services/auth/Dockerfile](services/auth/Dockerfile)
+- [services/user/Dockerfile](services/user/Dockerfile)
+- [services/job/Dockerfile](services/job/Dockerfile)
+- [services/utils/Dockerfile](services/utils/Dockerfile)
+- [services/payment/Dockerfile](services/payment/Dockerfile)
+
 ## 🔑 Key Features
 
 ### Recent Service Updates
@@ -407,6 +444,12 @@ npm start
 - Apache Kafka for async communication
 - Topics: `send-mail` (event-driven email notifications)
 
+### Containerized Infrastructure
+- Docker Compose orchestration for complete local stack
+- Infra containers: PostgreSQL, Redis, Zookeeper, Kafka
+- Service containers: frontend, auth, user, job, utils, payment
+- Health checks + dependency-based startup ordering
+
 ## 📝 API Endpoints
 
 ### Utils Routes (`/api/utils`)
@@ -456,6 +499,19 @@ The microservices communicate via:
 - **External AI API**: Utils service calls Gemini for career and ATS analysis
 - **Payment Gateway API**: Payment service integrates with Razorpay for checkout and verification
 - **Redis**: Caching and temporary token storage
+
+## 🐳 Docker Services and Ports
+
+- Frontend: `3000`
+- Auth Service: `5000`
+- Payment Service: `5001`
+- User Service: `5002`
+- Job Service: `5003`
+- Utils Service: `5004`
+- PostgreSQL: `5432`
+- Redis: `6379`
+- Kafka (host listener): `29092`
+- Zookeeper: `2181`
 
 ## 📚 Documentation
 
