@@ -1,64 +1,81 @@
-import { Producer, Admin, Kafka } from "kafkajs";
+import Queue from "bull";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-let producer: Producer;
-let admin: Admin;
+interface EmailMessage {
+	to: string;
+	subject: string;
+	html: string;
+}
+
+let emailQueue: Queue.Queue;
 
 export const connectKafka = async () => {
 	try {
-		const kafka = new Kafka({
-			clientId: "auth-service",
-			brokers: [process.env.KAFKA_BROKER || "localhost:9092"],
+		emailQueue = new Queue("send-mail", process.env.REDIS_URL as string, {
+			redis: {
+				tls: { rejectUnauthorized: false },
+				maxRetriesPerRequest: null,
+				connectTimeout: 30000,
+				commandTimeout: 30000,
+				enableReadyCheck: false,
+			},
 		});
 
-		admin = kafka.admin();
-		await admin.connect();
+		// Suppress command timeout errors - they occur after restart
+		(emailQueue as any).client.on("error", (error: Error) => {
+			const silence = error.message.includes("max retries") || 
+			              error.message.includes("Command timed out") ||
+			              error.message.includes("ECONNRESET");
+			if (!silence) {
+				console.error("❌ Queue error:", error.message);
+			}
+		});
 
-		const topics = await admin.listTopics();
+		console.log("✅ Bull Queue (send-mail) initialized");
+	} catch (error) {
+		console.error("❌ Error connecting to Bull Queue:", error);
+	}
+};
 
-		if (!topics.includes("send-mail")) {
-			await admin.createTopics({
-				topics: [
-					{
-						topic: "send-mail",
-						numPartitions: 1,
-						replicationFactor: 1,
-					},
-				],
-			});
-			console.log("✅ 'send-mail' topic created");
+export const publishToTopic = async (message: EmailMessage): Promise<void> => {
+	const maxRetries = 5;
+	let lastError: Error | null = null;
+
+	console.log(`📤 Queuing email to ${message.to}...`);
+
+	for (let i = 0; i < maxRetries; i++) {
+		// Wait for queue to be initialized
+		if (!emailQueue) {
+			await new Promise((resolve) => setTimeout(resolve, 500));
+			continue;
 		}
-		await admin.disconnect();
 
-		producer = kafka.producer();
-		await producer.connect();
-		console.log("✅ Kafka producer connected");
-	} catch (error) {
-		console.error("❌ Error connecting to Kafka:", error);
+		try {
+			const job = await emailQueue.add(message, {
+				attempts: 3,
+				backoff: {
+					type: "exponential",
+					delay: 2000,
+				},
+			});
+			console.log(`✅ Queued! Job ID: ${job.id}`);
+			return;
+		} catch (error) {
+			lastError = error as Error;
+			console.error(`   ⚠️  Attempt ${i + 1}/${maxRetries} failed: ${lastError.message}`);
+			if (i < maxRetries - 1) {
+				await new Promise((resolve) => setTimeout(resolve, 500));
+			}
+		}
 	}
+
+	throw new Error(`❌ Failed to queue email after ${maxRetries} attempts: ${lastError?.message}`);
 };
 
-export const publishToTopic = async (topic: string, message: any) => {
-	if (!producer) {
-		throw new Error("❌ Producer is not connected");
-		return;
-	}
-
-	try {
-		await producer.send({
-			topic: topic,
-			messages: [{ value: JSON.stringify(message) }],
-		});
-		console.log(`✅ Message published to topic "${topic}"`);
-	} catch (error) {
-		console.error("❌ Error publishing message to topic:", error);
-	}
-};
-
-export const disconnectKafka = async () => {
-	if (producer) {
-		producer.disconnect();
+export const disconnectKafka = async (): Promise<void> => {
+	if (emailQueue) {
+		await emailQueue.close();
 	}
 };
