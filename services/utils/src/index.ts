@@ -7,7 +7,10 @@ import { startSendMailConsumer } from "./consumer.js";
 
 dotenv.config();
 
-startSendMailConsumer();
+// Initialize email consumer in background (don't block server startup)
+startSendMailConsumer().catch((error) => {
+	console.error("❌ Failed to start mail consumer:", error);
+});
 
 cloudinary.config({
 	cloud_name: process.env.CLOUD_NAME,
