@@ -220,10 +220,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 	}
 
 	useEffect(() => {
-		fetchUser();
-		fetchApplications();
+		if (token) {
+			fetchUser();
+			fetchApplications();
+		} else {
+			setLoading(false);
+			setIsAuth(false);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [token]);
 
 	return (
 		<AppContext.Provider
