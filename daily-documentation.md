@@ -827,6 +827,42 @@
 
 ---
 
+## Day 39 — Kafka → Bull Queue Refactoring
+**Goal:** Async email messaging ko Kafka se Bull Queue (Redis-based) mein migrate karke infrastructure simplify karna.
+
+**Highlights**
+- Auth Service ne Kafka ko Bull Queue mein replace kiya for email job queuing.  
+  [services/auth/src/app.ts](services/auth/src/app.ts)  
+  [services/auth/src/producer.ts](services/auth/src/producer.ts)
+  - `connectKafka()` naa naam hai par Bull Queue init karta hai
+  - `publishToTopic()` emails ko queue mein add karta hai with 3 retry attempts + exponential backoff
+  - package.json mein `bull` v4.11.5 aur `redis` v5.10.0 add kiye gaye
+- Job Service ne same pattern follow kiya with Bull Queue for email publishing.  
+  [services/job/src/app.ts](services/job/src/app.ts)  
+  [services/job/src/producer.ts](services/job/src/producer.ts)
+  - Email queuing logic Bull-based hai now
+  - Retry + timeout error suppression implemented
+- Utils Service ne Bull Queue consumer setup kiya with Nodemailer integration.  
+  [services/utils/src/consumer.ts](services/utils/src/consumer.ts)  
+  [services/utils/src/index.ts](services/utils/src/index.ts)
+  - `startSendMailConsumer()` Bull queue process job listeners setup karta hai
+  - Queue process 5 concurrent jobs handle karta hai
+  - Nodemailer SMTP via Gmail configured
+  - Job failures par auto-retry with exponential backoff (2s delay)
+  - Redis TLS support for Upstash serverless setup
+- Docker files aur Kafka infrastructure removed (local dev simplification ke liye).  
+  - Deleted: `docker-compose.yml`, `Dockerfile` (all services), `.dockerignore` (all services), `.env.docker.example`
+- All .env.example files updated to remove Kafka + Docker references.  
+  [services/auth/.env.example](services/auth/.env.example), [services/user/.env.example](services/user/.env.example), etc.
+
+**Key Flows**
+- **Email Queue Flow (Auth/Job)**: Service event -> `publishToTopic()` call -> Bull queue job add -> return immediately (non-blocking).
+- **Email Processing Flow (Utils)**: Bull job listener active -> `emailQueue.process()` handler -> Nodemailer SMTP send -> on success/failure log.
+- **Retry Flow**: Job fails -> exponential backoff (2s delay) -> 3 max attempts -> if all fail, error logged + job discarded.
+- **Env-driven Connectivity**: Redis URL from `REDIS_URL` env -> TLS rejectUnauthorized false -> Upstash compatible.
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
