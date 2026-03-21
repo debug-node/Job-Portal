@@ -24,8 +24,7 @@ Job Portal is a modern job marketplace platform with a microservices architectur
 - **Framework**: Express.js 5.2.1
 - **Authentication**: JWT (jsonwebtoken)
 - **Database**: PostgreSQL (Neon Serverless)
-- **Caching**: Redis
-- **Message Queue**: Apache Kafka
+- **Caching & Job Queue**: Redis + Bull Queue (async email processing)
 - **File Upload**: Cloudinary + DataURI
 - **Email**: Nodemailer
 - **Password Hashing**: bcrypt
@@ -315,52 +314,18 @@ npm run build
 npm start
 ```
 
-### Docker Setup (Full Stack)
-
-1. Create docker env file from template:
-```bash
-cp .env.docker.example .env.docker
-```
-
-2. Start all services with build:
-```bash
-docker compose --env-file .env.docker up --build
-```
-
-3. Start in background:
-```bash
-docker compose --env-file .env.docker up -d
-```
-
-4. Stop stack:
-```bash
-docker compose down
-```
-
-5. Reset stack with volumes:
-```bash
-docker compose down -v
-```
-
-Docker/Compose files:
-- [docker-compose.yml](docker-compose.yml)
-- [.env.docker.example](.env.docker.example)
-- [frontend/Dockerfile](frontend/Dockerfile)
-- [services/auth/Dockerfile](services/auth/Dockerfile)
-- [services/user/Dockerfile](services/user/Dockerfile)
-- [services/job/Dockerfile](services/job/Dockerfile)
-- [services/utils/Dockerfile](services/utils/Dockerfile)
-- [services/payment/Dockerfile](services/payment/Dockerfile)
-
 ## 🔑 Key Features
 
 ### Recent Service Updates
 - CORS enabled in Auth, User, and Job services for frontend/browser integration.
 - Auth service now uses the normalized upload endpoint path: `/api/utils/upload`.
 - Job service endpoint `GET /api/job/company/:id` is public (no auth required).
-- Auth service dependencies updated with `cors` and `@types/cors`.
+- Auth and Job services now use Bull Queue (Redis) for async email job processing with retry logic.
+- Utils service Bull Queue consumer handles email dispatch with 3 attempts, exponential backoff, and graceful error handling.
+- Email queuing is non-blocking: immediate return after job add to queue.
 - User auth middleware updated with empty-token guard and improved JWT error logging.
 - New payment service added with Razorpay checkout and verification endpoints.
+- Kafka infrastructure removed in favor of simpler Redis + Bull Queue async pattern.
 
 ### Recent Frontend Updates
 - Core route coverage completed:
@@ -392,16 +357,17 @@ Docker/Compose files:
 ### Auth Service
 - User registration with email verification
 - Login with JWT token generation
-- Forgot password with email reset link
+- Forgot password with email reset link (via Bull Queue async job)
 - Password reset functionality
 - Profile file upload (avatar/resume)
 - CORS enabled for cross-origin frontend requests
 - bcrypt password hashing
 - Multer file upload handling
+- Bull Queue for non-blocking email job queueing
 
 ### Utils Service
-- Kafka consumer for email events
-- Nodemailer email dispatch
+- Bull Queue consumer for async email job processing
+- Nodemailer email dispatch with SMTP (Gmail)
 - Cloudinary file storage
 - Email template system
 - AI career guidance from skill input
@@ -494,26 +460,13 @@ Docker/Compose files:
 ## 🔄 Service Communication
 
 The microservices communicate via:
-- **Kafka**: Async event-driven messaging (e.g., send-mail events from auth and job services)
+- **Bull Queue + Redis**: Async job-based messaging for email events (non-blocking pub-sub pattern)
 - **HTTP/REST**: Synchronous service-to-service calls via Axios
 - **External AI API**: Utils service calls Gemini for career and ATS analysis
 - **Payment Gateway API**: Payment service integrates with Razorpay for checkout and verification
-- **Redis**: Caching and temporary token storage
+- **Redis**: Job queue storage with TLS support for Upstash serverless
 
-## 🐳 Docker Services and Ports
-
-- Frontend: `3000`
-- Auth Service: `5000`
-- Payment Service: `5001`
-- User Service: `5002`
-- Job Service: `5003`
-- Utils Service: `5004`
-- PostgreSQL: `5432`
-- Redis: `6379`
-- Kafka (host listener): `29092`
-- Zookeeper: `2181`
-
-## 📚 Documentation
+##  Documentation
 
 See [daily-documentation.md](daily-documentation.md) for detailed day-by-day development progress and implementation details.
 
@@ -572,7 +525,8 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 
 ### Auth Service
 - Express 5.2.1 - Web framework
-- Kafka.js 2.2.4 - Kafka client
+- Bull 4.11.5 - Job queue library
+- Redis 5.10.0 - Redis client for Bull Queue
 - jsonwebtoken 9.0.3 - JWT token handling
 - bcrypt 6.0.0 - Password hashing
 - Multer 2.0.2 - File upload handling
@@ -581,7 +535,8 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 
 ### Utils Service
 - Express 5.2.1 - Web framework
-- Kafka.js 2.2.4 - Kafka consumer
+- Bull 4.11.5 - Job queue library
+- Redis 5.10.0 - Redis client for Bull Queue
 - Cloudinary 2.8.0 - File storage
 - @google/genai 1.44.0 - Gemini AI integration
 - Nodemailer 8.0.2 - Email service
@@ -600,7 +555,8 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 - jsonwebtoken 9.0.3 - JWT token handling
 - Multer 2.0.2 - File upload handling
 - Axios 1.13.5 - HTTP client for inter-service calls
-- Kafka.js 2.2.4 - Kafka producer for mail events
+- Bull 4.11.5 - Job queue library
+- Redis 5.10.0 - Redis client for Bull Queue
 - Neon Serverless - Database connector
 - CORS 2.8.6 - Cross-Origin Resource Sharing
 
