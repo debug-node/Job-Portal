@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import routes from "./routes.js";
 import cors from "cors";
 import { v2 as cloudinary } from "cloudinary";
+import { startSendMailConsumer } from "./consumer.js";
 
 dotenv.config();
 
@@ -20,6 +21,11 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 app.use("/api/utils", routes);
+
+// Start email consumer for Bull Queue
+startSendMailConsumer().catch((error) => {
+	console.error("❌ Failed to start email consumer:", error);
+});
 
 app.listen(process.env.PORT, () => {
 	console.log(
