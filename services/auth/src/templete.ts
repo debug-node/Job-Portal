@@ -173,3 +173,176 @@ export const forgotPasswordTemplate = (resetLink: string) => {
     </html>
 `;
 };
+
+export const welcomeTemplate = (name: string) => {
+	return `
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Welcome to HireHeaven</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+            }
+
+            .email-wrapper {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .email-container {
+                width: 600px;
+                border-collapse: collapse;
+                background-color: #ffffff;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+
+            .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 40px 30px;
+                text-align: center;
+            }
+
+            .header h1 {
+                margin: 0;
+                color: #ffffff;
+                font-size: 28px;
+                font-weight: 600;
+            }
+
+            .content {
+                padding: 40px 30px;
+            }
+
+            .text {
+                margin: 0 0 20px;
+                color: #333333;
+                font-size: 16px;
+                line-height: 1.6;
+            }
+
+            .text-muted {
+                color: #666666;
+                font-size: 14px;
+            }
+
+            .button-wrapper {
+                text-align: center;
+                margin: 30px 0;
+            }
+
+            .button {
+                display: inline-block;
+                padding: 12px 30px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: #ffffff;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 16px;
+            }
+
+            .button:hover {
+                opacity: 0.9;
+            }
+
+            .highlight {
+                background-color: #f0f0f0;
+                padding: 20px;
+                border-left: 4px solid #667eea;
+                margin: 20px 0;
+                border-radius: 4px;
+            }
+
+            .footer {
+                background-color: #f8f9fa;
+                padding: 30px;
+                text-align: center;
+                border-top: 1px solid #e9ecef;
+            }
+
+            .footer-text {
+                margin: 0 0 10px;
+                color: #999999;
+                font-size: 12px;
+            }
+
+            .footer-text:last-child {
+                margin: 0;
+            }
+        </style>
+    </head>
+
+    <body>
+        <table role="presentation" class="email-wrapper">
+            <tr>
+                <td align="center" style="padding: 40px 0;">
+                    <table role="presentation" class="email-container">
+                        <!-- Header -->
+                        <tr>
+                            <td class="header">
+                                <h1>Welcome to HireHeaven!</h1>
+                            </td>
+                        </tr>
+                        <!-- Content -->
+                        <tr>
+                            <td class="content">
+                                <p class="text">Hi ${name},</p>
+                                <p class="text">
+                                    Welcome to HireHeaven! We're excited to have you on board.
+                                </p>
+                                
+                                <div class="highlight">
+                                    <p class="text"><strong>Your account is ready!</strong></p>
+                                    <p class="text-muted">
+                                        You can now log in and start exploring opportunities or posting jobs.
+                                    </p>
+                                </div>
+
+                                <p class="text">
+                                    Here's what you can do next:
+                                </p>
+                                <ul style="color: #333333; font-size: 16px; line-height: 1.8;">
+                                    <li>Complete your profile to get noticed</li>
+                                    <li>Browse job opportunities</li>
+                                    <li>Post jobs (if you're a recruiter)</li>
+                                    <li>Connect with top talent</li>
+                                </ul>
+
+                                <div class="button-wrapper">
+                                    <a href="${process.env.FRONTEND_URL}" class="button">Get Started</a>
+                                </div>
+
+                                <p class="text-muted">
+                                    If you have any questions or need assistance, feel free to reach out to our support team.
+                                </p>
+                            </td>
+                        </tr>
+                        <!-- Footer -->
+                        <tr>
+                            <td class="footer">
+                                <p class="footer-text">
+                                    © 2026 Hireheaven. All rights reserved.
+                                </p>
+                                <p class="footer-text">
+                                    This is an automated message, please do not reply.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+
+    </html>
+`;
+};

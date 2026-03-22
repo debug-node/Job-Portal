@@ -5,7 +5,7 @@ import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/TryCatch.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { forgotPasswordTemplate } from "../templete.js";
+import { forgotPasswordTemplate, welcomeTemplate } from "../templete.js";
 import { publishToTopic } from "../producer.js";
 import { redisClient } from "../index.js";
 
@@ -62,6 +62,17 @@ export const registerUser = TryCatch(async (req, res, next) => {
 			expiresIn: "15d",
 		},
 	);
+
+	// Send welcome email
+	const welcomeMessage = {
+		to: registeredUser?.email,
+		subject: "Welcome to HireHeaven - Account Created Successfully",
+		html: welcomeTemplate(registeredUser?.name),
+	};
+
+	publishToTopic(welcomeMessage).catch((err) => {
+		console.error("❌ failed to send welcome email", err);
+	});
 
 	res.json({
 		message: "User registered successfully",
