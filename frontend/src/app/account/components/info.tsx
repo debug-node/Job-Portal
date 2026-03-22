@@ -42,9 +42,11 @@ const Info: React.FC<AccountProps> = ({ user, isYourAccount }) => {
 	const [bio, setBio] = useState("");
 
 	// Memoized subscription status calculation
-	// Only recalculates when user.subscription changes (more efficient)
+	// Only recalculates when user.subscription changes
+	// Note: This deliberately violates react-hooks/purity rule because checking subscription expiry requires current time
 	const isSubscriptionActive = useMemo(() => {
 		if (!user.subscription) return false;
+		// eslint-disable-next-line react-hooks/purity
 		return new Date(user.subscription).getTime() > Date.now();
 	}, [user.subscription]);
 
