@@ -1,10 +1,13 @@
 import Queue from "bull";
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 let emailQueue: Queue.Queue;
+
+// Initialize SendGrid
+sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
 
 export const startSendMailConsumer = async () => {
 	try {
@@ -61,28 +64,17 @@ export const startSendMailConsumer = async () => {
 					throw new Error(`Missing email data: to=${to}, subject=${subject}, html=${html}`);
 				}
 				
-				const transporter = nodemailer.createTransport({
-					host: "smtp.gmail.com",
-					port: 465,
-					secure: true,
-					family: 4, // Force IPv4 to bypass IPv6 issues on Railway
-					auth: {
-						user: process.env.SMTP_USER,
-						pass: process.env.SMTP_PASS,
-					},
-					connectionTimeout: 5000,
-					socketTimeout: 5000,
-				} as any);
-
-				const result = await transporter.sendMail({
-					from: "Hireheaven <no-reply>",
+				const msg = {
 					to,
+					from: "noreply@hireheaven.com",
 					subject,
 					html,
-				});
+				};
 
-				console.log(`✅ Email sent! ID: ${result.messageId}`);
-				return { success: true, messageId: result.messageId };
+				const result = await sgMail.send(msg);
+
+				console.log(`✅ Email sent! Status: ${result[0].statusCode}`);
+				return { success: true, statusCode: result[0].statusCode };
 			} catch (error) {
 				console.error(`❌ Email failed:`, (error as Error).message);
 				throw error;
