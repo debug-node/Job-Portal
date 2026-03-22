@@ -4,8 +4,11 @@ import ErrorHandler from "../utils/errorHandler.js";
 import { sql } from "../utils/db.js";
 import { instance } from "../index.js";
 import crypto from "crypto";
-import { publishToTopic } from "../producer.js";
+import sgMail from "@sendgrid/mail";
 import { subscriptionInvoiceTemplate } from "../template.js";
+
+// Initialize SendGrid
+sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
 
 export const checkOut = TryCatch(async (req: AuthenticatedRequest, res) => {
 	if (!req.user) {
@@ -73,11 +76,12 @@ export const paymentVerification = TryCatch(async (req: AuthenticatedRequest, re
 
 		const subscriptionMessage = {
 			to: updatedUser?.email,
+			from: "adityabscit.2829@gmail.com",
 			subject: "Subscription Confirmation and Invoice - HireHeaven",
 			html: subscriptionInvoiceTemplate(updatedUser?.name, plan, amount, expiryDateStr, invoiceId),
 		};
 
-		publishToTopic(subscriptionMessage).catch((err) => {
+		sgMail.send(subscriptionMessage).catch((err) => {
 			console.error("❌ failed to send subscription email", err);
 		});
 
