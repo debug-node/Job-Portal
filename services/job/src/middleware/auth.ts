@@ -85,7 +85,7 @@ export const isAuth = async (
 
 		next();
 	} catch (error) {
-		console.log(error);
+		console.error("[Auth] Token validation failed:", (error as Error).message);
 		res.status(401).json({
 			message: "Authentication failed. Please login again.",
 		});
