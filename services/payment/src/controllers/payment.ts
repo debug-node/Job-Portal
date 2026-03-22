@@ -4,6 +4,8 @@ import ErrorHandler from "../utils/errorHandler.js";
 import { sql } from "../utils/db.js";
 import { instance } from "../index.js";
 import crypto from "crypto";
+import { publishToTopic } from "../producer.js";
+import { subscriptionInvoiceTemplate } from "../template.js";
 
 export const checkOut = TryCatch(async (req: AuthenticatedRequest, res) => {
 	if (!req.user) {
@@ -62,6 +64,22 @@ export const paymentVerification = TryCatch(async (req: AuthenticatedRequest, re
 
 		const [updatedUser] =
 			await sql`UPDATE users SET subscription = ${expiryDate} WHERE user_id = ${user?.user_id} RETURNING *`;
+
+		// Send subscription invoice email
+		const plan = "HireHeaven Premium - 1 Month";
+		const amount = Number(process.env.RAZORPAY_AMOUNT || 119);
+		const invoiceId = `INV-${razorpay_payment_id}`;
+		const expiryDateStr = expiryDate.toLocaleDateString();
+
+		const subscriptionMessage = {
+			to: updatedUser?.email,
+			subject: "Subscription Confirmation and Invoice - HireHeaven",
+			html: subscriptionInvoiceTemplate(updatedUser?.name, plan, amount, expiryDateStr, invoiceId),
+		};
+
+		publishToTopic(subscriptionMessage).catch((err) => {
+			console.error("❌ failed to send subscription email", err);
+		});
 
 		res.json({
 			message: "Subscription Purchased Successfully",
