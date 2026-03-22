@@ -916,6 +916,28 @@
 
 ---
 
+## Day 42 — SendGrid Email Pipeline + Template Integration
+**Goal:** Email delivery stack ko Gmail SMTP se SendGrid API par migrate karke auth/payment events ke liye richer transactional templates integrate karna.
+
+**Highlights**
+- Utils service mail consumer me provider migration complete hua: Nodemailer SMTP se SendGrid API flow me switch kiya gaya.  
+  [services/utils/src/consumer.ts](services/utils/src/consumer.ts)
+- Utils dependency graph update hua: `nodemailer` remove karke `@sendgrid/mail` add kiya gaya.  
+  [services/utils/package.json](services/utils/package.json)
+- Auth templates expand huye: welcome, login alert, aur subscription invoice templates add/improve kiye gaye.  
+  [services/auth/src/templete.ts](services/auth/src/templete.ts)
+- Auth login/register flows me transactional email integration wire ki gayi.  
+  [services/auth/src/controllers/auth.ts](services/auth/src/controllers/auth.ts)
+- Payment verification success ke baad subscription invoice email trigger add hua.  
+  [services/payment/src/controllers/payment.ts](services/payment/src/controllers/payment.ts)
+
+**Key Flows**
+- **Auth Welcome/Login Flow**: register/login event -> queue publish -> utils consumer -> SendGrid API dispatch.
+- **Subscription Invoice Flow**: payment verify success -> invoice template payload -> send-mail queue -> SendGrid delivery.
+- **Provider Migration Flow**: SMTP config dependency removal -> API key based SendGrid client init -> transactional send operation.
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
@@ -923,7 +945,7 @@
 | --- | --- | --- | --- | --- |
 | POST | /register | User register | JSON + file (jobseeker) | `role` = `jobseeker` requires resume file field `file` |
 | POST | /login | User login | JSON | Returns JWT + user data |
-| POST | /forgot | Send reset link | JSON | Publishes Kafka message |
+| POST | /forgot | Send reset link | JSON | Publishes async mail job to queue |
 | POST | /reset/:token | Reset password | JSON + URL param | Token valid 15 min |
 
 Source: [services/auth/src/routes/auth.ts](services/auth/src/routes/auth.ts)

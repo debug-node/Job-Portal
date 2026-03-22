@@ -28,9 +28,16 @@ This project provides a complete hiring workflow for jobseekers and recruiters:
 - Frontend: Next.js, React, Tailwind CSS, shadcn/ui
 - Database: PostgreSQL (Neon)
 - Queue/Cache: Redis + Bull Queue
+- Email Delivery: SendGrid API
 - File Storage: Cloudinary
 - Payments: Razorpay
 - AI: Google Gemini API
+
+## 🆕 Latest Update
+
+- Email pipeline migrated from SMTP-based delivery to SendGrid API delivery
+- Auth transactional templates expanded (welcome, login alert, subscription invoice)
+- Payment verification flow now triggers subscription invoice email
 
 ## 📁 Project Structure
 
