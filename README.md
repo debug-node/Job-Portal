@@ -1,6 +1,6 @@
 # Job Portal
 
-A microservices-based job portal application built with Node.js, Express, TypeScript, and Kafka for real-time communication.
+A microservices-based job portal application built with Node.js, Express, TypeScript, Redis, and Bull Queue for real-time async processing.
 
 ## 📋 Project Overview
 
@@ -74,7 +74,7 @@ Job-Portal/
 │   │   ├── src/
 │   │   │   ├── app.ts       # Express app setup
 │   │   │   ├── index.ts     # Server entry point
-│   │   │   ├── producer.ts  # Kafka producer
+│   │   │   ├── producer.ts  # Bull Queue publisher
 │   │   │   ├── templete.ts  # Email templates
 │   │   │   ├── controllers/
 │   │   │   │   └── auth.ts  # Auth logic
@@ -110,7 +110,7 @@ Job-Portal/
 │   ├── utils/               # Utility microservice
 │   │   ├── src/
 │   │   │   ├── index.ts
-│   │   │   ├── consumer.ts  # Kafka consumer
+│   │   │   ├── consumer.ts  # Bull Queue consumer
 │   │   │   └── routes.ts
 │   │   ├── package.json
 │   │   └── tsconfig.json
@@ -119,7 +119,7 @@ Job-Portal/
 │   │   ├── src/
 │   │   │   ├── app.ts       # Express app setup
 │   │   │   ├── index.ts     # Server entry point + DB init
-│   │   │   ├── producer.ts  # Kafka producer
+│   │   │   ├── producer.ts  # Bull Queue publisher
 │   │   │   ├── template.ts  # Email templates
 │   │   │   ├── controllers/
 │   │   │   │   └── job.ts   # Company + job logic
@@ -166,7 +166,7 @@ Job-Portal/
 - npm or yarn
 - PostgreSQL (Neon)
 - Redis
-- Apache Kafka
+- Redis URL (local Redis or Upstash)
 - Cloudinary account
 - Email service credentials
 - Razorpay account (Key ID + Secret)
@@ -224,12 +224,13 @@ Job-Portal/
    DB_URL=postgresql://...
    REDIS_URL=redis://...
    JWT_SEC=your_jwt_secret
-   KAFKA_BROKER=localhost:9092
+   UPLOAD_SERVICE=http://localhost:5001
    ```
    
    **services/utils/.env**
    ```
-   KAFKA_BROKER=localhost:9092
+   PORT=5001
+   REDIS_URL=redis://...
    CLOUD_NAME=...
    API_KEY=...
    API_SECRET=...
@@ -252,7 +253,7 @@ Job-Portal/
    DB_URL=postgresql://...
    JWT_SEC=your_jwt_secret
    UPLOAD_SERVICE=http://localhost:5001
-   KAFKA_BROKER=localhost:9092
+   REDIS_URL=redis://...
    ```
 
    **services/payment/.env**
@@ -321,8 +322,11 @@ npm start
 - Auth service now uses the normalized upload endpoint path: `/api/utils/upload`.
 - Job service endpoint `GET /api/job/company/:id` is public (no auth required).
 - Auth and Job services now use Bull Queue (Redis) for async email job processing with retry logic.
+- Queue lifecycle naming cleaned up for clarity: `connectKafka` renamed to `initEmailQueue` in Auth/Job services.
+- Queue shutdown helper naming normalized from `disconnectKafka` to `closeQueue`.
 - Utils service Bull Queue consumer handles email dispatch with 3 attempts, exponential backoff, and graceful error handling.
 - Email queuing is non-blocking: immediate return after job add to queue.
+- Auth middleware error logs improved in Job and Payment services with scoped `console.error` messages.
 - User auth middleware updated with empty-token guard and improved JWT error logging.
 - New payment service added with Razorpay checkout and verification endpoints.
 - Kafka infrastructure removed in favor of simpler Redis + Bull Queue async pattern.
@@ -346,6 +350,7 @@ npm start
    - hero, about, and user profile images
 - Subscription page now uses env-driven Razorpay key (`NEXT_PUBLIC_RAZORPAY_KEY`).
 - Razorpay script loader improved with explicit error handling/retry-safe behavior.
+- Account subscription status memoization now includes explicit lint-safe handling for time-based `Date.now()` checks.
 
 ### Frontend Performance Optimizations
 - Image rendering optimized with Next.js `Image` and lazy loading in list-heavy UI.
@@ -407,14 +412,8 @@ npm start
 - Enums: `user_role`, `job_type`, `work_location`, `application_status`
 
 ### Message Queue
-- Apache Kafka for async communication
-- Topics: `send-mail` (event-driven email notifications)
-
-### Containerized Infrastructure
-- Docker Compose orchestration for complete local stack
-- Infra containers: PostgreSQL, Redis, Zookeeper, Kafka
-- Service containers: frontend, auth, user, job, utils, payment
-- Health checks + dependency-based startup ordering
+- Bull Queue + Redis for async communication
+- Queue: `send-mail` (event-driven email notifications)
 
 ## 📝 API Endpoints
 
@@ -466,7 +465,7 @@ The microservices communicate via:
 - **Payment Gateway API**: Payment service integrates with Razorpay for checkout and verification
 - **Redis**: Job queue storage with TLS support for Upstash serverless
 
-##  Documentation
+## 📚 Documentation
 
 See [daily-documentation.md](daily-documentation.md) for detailed day-by-day development progress and implementation details.
 
@@ -526,11 +525,10 @@ See [daily-documentation.md](daily-documentation.md) for detailed day-by-day dev
 ### Auth Service
 - Express 5.2.1 - Web framework
 - Bull 4.11.5 - Job queue library
-- Redis 5.10.0 - Redis client for Bull Queue
+- Redis 5.10.0 - Caching and queue connectivity
 - jsonwebtoken 9.0.3 - JWT token handling
 - bcrypt 6.0.0 - Password hashing
 - Multer 2.0.2 - File upload handling
-- Redis 5.10.0 - Caching
 - Axios 1.13.2 - HTTP client
 
 ### Utils Service
