@@ -5,7 +5,7 @@ import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/TryCatch.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { forgotPasswordTemplate, welcomeTemplate } from "../templete.js";
+import { forgotPasswordTemplate, welcomeTemplate, loginAlertTemplate, subscriptionInvoiceTemplate } from "../templete.js";
 import { publishToTopic } from "../producer.js";
 import { redisClient } from "../index.js";
 
@@ -110,6 +110,18 @@ export const loginUser = TryCatch(async (req, res, next) => {
 
 	const token = jwt.sign({ id: userObject?.user_id }, process.env.JWT_SEC as string, {
 		expiresIn: "15d",
+	});
+
+	// Send login alert email
+	const loginTime = new Date().toLocaleString();
+	const loginMessage = {
+		to: userObject?.email,
+		subject: "Login Alert - HireHeaven",
+		html: loginAlertTemplate(userObject?.name, loginTime),
+	};
+
+	publishToTopic(loginMessage).catch((err) => {
+		console.error("❌ failed to send login alert email", err);
 	});
 
 	res.json({
