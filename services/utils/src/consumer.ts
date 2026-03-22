@@ -66,7 +66,7 @@ export const startSendMailConsumer = async () => {
 				
 				const msg = {
 					to,
-					from: "noreply@hireheaven.com",
+					from: "adityabscit.2829@gmail.com",
 					subject,
 					html,
 				};
