@@ -80,64 +80,74 @@ const RegisterPage = () => {
 	};
 
 	return (
-		<div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
-			<div className="absolute -top-16 -right-20 w-72 h-72 bg-red-500/10 rounded-full blur-3xl" />
-			<div className="absolute -bottom-20 -left-24 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
-			<div className="w-full max-w-md">
-				<div className="text-center mb-8 relative z-10">
-					<h1 className="text-4xl font-bold mb-2">Join HireHeaven</h1>
-					<p className="text-sm opacity-70">
-						Create your account to start a new journey
+		<div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden bg-linear-to-br from-slate-950 via-slate-900 to-slate-950">
+			{/* Animated background gradients */}
+			<div className="absolute -top-20 -right-20 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl animate-pulse" />
+			<div className="absolute -bottom-20 -left-20 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
+			
+			<div className="w-full max-w-md relative z-20">
+				{/* Header */}
+				<div className="text-center mb-10">
+					<h1 className="text-5xl font-black mb-3 bg-linear-to-r from-blue-400 via-blue-300 to-cyan-300 text-transparent bg-clip-text">
+						Join HireHeaven
+					</h1>
+					<p className="text-slate-400 text-base">
+						Create your account and start your journey
 					</p>
 				</div>
-				<div className="border rounded-2xl p-8 shadow-xl bg-card/80 backdrop-blur-sm relative z-10">
-					<form onSubmit={submitHandler} className="space-y-5">
-						<div className="space-y-2">
-							<Label htmlFor="role" className="text-sm font-medium">
+
+				{/* Form Card */}
+				<div className="backdrop-blur-xl bg-slate-800/40 border border-slate-700/50 rounded-3xl p-8 shadow-2xl">
+					<form onSubmit={submitHandler} className="space-y-6">
+						{/* Role Selection */}
+						<div className="space-y-3">
+							<Label htmlFor="role" className="text-sm font-semibold text-slate-300 block">
 								I want to
 							</Label>
 							<div className="relative">
-								<Briefcase className="icon-style" />
+								<Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 pointer-events-none" />
 								<select
 									id="role"
 									value={role}
 									onChange={(e) => setRole(e.target.value)}
-									className="w-full h-11 pl-10 pr-4 border-2 border-gray-300 rounded-md bg-transparent"
+									className="w-full h-12 pl-12 pr-4 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white font-medium focus:border-blue-500/50 focus:bg-slate-700/70 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-base"
 									required>
-									<option value="">Select your role</option>
-									<option value="jobseeker">Find a Job</option>
-									<option value="recruiter">Hire Talent</option>
+									<option value="" className="bg-slate-800 text-slate-300">Select your role</option>
+									<option value="jobseeker" className="bg-slate-800 text-white">Find a Job</option>
+									<option value="recruiter" className="bg-slate-800 text-white font-semibold">Hire Talent</option>
 								</select>
 							</div>
 						</div>
 
+						{/* Conditional Form Fields */}
 						{role && (
-							<div className="space-y-5 animate-in fade-in duration-300">
-								<div className="space-y-2">
-									<Label htmlFor="name" className="text-sm font-medium">
+							<div className="space-y-5 animate-in fade-in-up duration-300">
+								{/* Name */}
+								<div className="space-y-3">
+									<Label htmlFor="name" className="text-sm font-semibold text-slate-300 block">
 										Full Name
 									</Label>
 									<div className="relative">
-										<Mail className="icon-style" />
+										<Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 pointer-events-none" />
 										<Input
 											id="name"
 											type="text"
-											placeholder="John Doe"
+											placeholder="Enter your full name"
 											value={name}
 											onChange={(e) => setName(e.target.value)}
 											required
-											className="pl-10 h-11"
+											className="pl-12 h-12 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-blue-500/50 focus:bg-slate-700/70 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-medium"
 										/>
 									</div>
 								</div>
-								<div className="space-y-2">
-									<Label
-										htmlFor="email"
-										className="text-sm font-medium">
+
+								{/* Email */}
+								<div className="space-y-3">
+									<Label htmlFor="email" className="text-sm font-semibold text-slate-300 block">
 										Email Address
 									</Label>
 									<div className="relative">
-										<Mail className="icon-style" />
+										<Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 pointer-events-none" />
 										<Input
 											id="email"
 											type="email"
@@ -145,117 +155,110 @@ const RegisterPage = () => {
 											value={email}
 											onChange={(e) => setEmail(e.target.value)}
 											required
-											className="pl-10 h-11"
+											className="pl-12 h-12 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-blue-500/50 focus:bg-slate-700/70 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-medium"
 										/>
 									</div>
 								</div>
-								<div className="space-y-2">
-									<Label
-										htmlFor="password"
-										className="text-sm font-medium">
+
+								{/* Password */}
+								<div className="space-y-3">
+									<Label htmlFor="password" className="text-sm font-semibold text-slate-300 block">
 										Password
 									</Label>
 									<div className="relative">
-										<Lock className="icon-style" />
+										<Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 pointer-events-none" />
 										<Input
 											id="password"
 											type="password"
-											placeholder="********"
+											placeholder="••••••••"
 											value={password}
 											onChange={(e) => setPassword(e.target.value)}
 											required
-											className="pl-10 h-11"
+											className="pl-12 h-12 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-blue-500/50 focus:bg-slate-700/70 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-medium"
 										/>
 									</div>
 								</div>
 
-								<div className="space-y-2">
-									<Label
-										htmlFor="phone"
-										className="text-sm font-medium">
+								{/* Phone */}
+								<div className="space-y-3">
+									<Label htmlFor="phone" className="text-sm font-semibold text-slate-300 block">
 										Phone Number
 									</Label>
 									<div className="relative">
-										<Lock className="icon-style" />
+										<Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400 pointer-events-none" />
 										<Input
 											id="phone"
-											type="number"
-											placeholder="+91 1234567890"
+											type="tel"
+											placeholder="+91 98765 43210"
 											value={phoneNumber}
-											onChange={(e) =>
-												setPhoneNumber(e.target.value)
-											}
+											onChange={(e) => setPhoneNumber(e.target.value)}
 											required
-											className="pl-10 h-11"
+											className="pl-12 h-12 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-blue-500/50 focus:bg-slate-700/70 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-medium"
 										/>
 									</div>
 								</div>
 
+								{/* Job Seeker Only Fields */}
 								{role === "jobseeker" && (
-									<div className="space-y-5 pt-4 border-t border-gray-400">
-										<div className="space-y-2">
-											<Label
-												htmlFor="resume"
-												className="text-sm font-medium">
+									<div className="space-y-5 pt-5 border-t border-slate-700/30">
+										{/* Resume */}
+										<div className="space-y-3">
+											<Label htmlFor="resume" className="text-sm font-semibold text-slate-300 block">
 												Resume (PDF)
 											</Label>
-											<div className="relative">
-												<Lock className="icon-style" />
-												<Input
-													id="resume"
-													type="file"
-													accept="application/pdf"
-													onChange={(e) => {
-														if (
-															e.target.files &&
-															e.target.files[0]
-														) {
-															setResume(e.target.files[0]);
-														}
-													}}
-													className="h-11 cursor-pointer"
-												/>
-											</div>
+											<Input
+												id="resume"
+												type="file"
+												accept="application/pdf"
+												onChange={(e) => {
+													if (e.target.files?.[0]) {
+														setResume(e.target.files[0]);
+													}
+												}}
+												className="h-12 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white file:text-blue-300 file:bg-slate-600/50 file:border-0 file:rounded-lg file:font-medium file:cursor-pointer file:mr-3 file:px-3 file:py-2 cursor-pointer focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+											/>
 										</div>
 
-										<div className="space-y-2">
-											<Label
-												htmlFor="bio"
-												className="text-sm font-medium">
+										{/* Bio */}
+										<div className="space-y-3">
+											<Label htmlFor="bio" className="text-sm font-semibold text-slate-300 block">
 												Bio
 											</Label>
 											<div className="relative">
-												<Lock className="icon-style" />
-												<Input
+												<Lock className="absolute left-4 top-4 w-5 h-5 text-blue-400 pointer-events-none" />
+												<textarea
 													id="bio"
-													type="text"
 													placeholder="Tell us about yourself..."
 													value={bio}
-													onChange={(e) =>
-														setBio(e.target.value)
-													}
+													onChange={(e) => setBio(e.target.value)}
 													required
-													className="pl-10 h-11"
+													rows={3}
+													className="pl-12 pt-3 w-full bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder:text-slate-500 focus:border-blue-500/50 focus:bg-slate-700/70 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-medium resize-none"
 												/>
 											</div>
 										</div>
 									</div>
 								)}
 
-								<Button disabled={btnLoading} className="w-full">
-									{btnLoading ? "Please Wait..." : "Register"}
-									<ArrowRight size={18} />
+								{/* Register Button */}
+								<Button 
+									disabled={btnLoading} 
+									className="w-full h-12 mt-8 bg-linear-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold text-base rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+								>
+									{btnLoading ? "Creating account..." : "Create Account"}
+									{!btnLoading && <ArrowRight size={20} />}
 								</Button>
 							</div>
 						)}
 					</form>
 
-					<div className="mt-6 pt-6 border-t border-gray-400">
-						<p className="text-center text-sm">
+					{/* Login Link */}
+					<div className="mt-8 pt-8 border-t border-slate-700/30 text-center">
+						<p className="text-slate-400 text-sm">
 							Already have an account?{" "}
 							<Link
-								href={"/login"}
-								className="text-blue-500 font-medium hover:underline transition-all">
+								href="/login"
+								className="text-blue-400 font-semibold hover:text-cyan-300 transition-colors">
 								Sign in
 							</Link>
 						</p>
