@@ -27,17 +27,19 @@ This project provides a complete hiring workflow for jobseekers and recruiters:
 - Backend: Node.js, Express, TypeScript
 - Frontend: Next.js, React, Tailwind CSS, shadcn/ui
 - Database: PostgreSQL (Neon)
-- Queue/Cache: Redis + Bull Queue
-- Email Delivery: SendGrid API
+- Cache: Redis (Upstash)
+- Email Delivery: SendGrid API (Direct)
 - File Storage: Cloudinary
 - Payments: Razorpay
 - AI: Google Gemini API
 
 ## 🆕 Latest Update
 
-- Email pipeline migrated from SMTP-based delivery to SendGrid API delivery
-- Auth transactional templates expanded (welcome, login alert, subscription invoice)
-- Payment verification flow now triggers subscription invoice email
+- Email delivery switched from Bull Queue to direct SendGrid API for instant delivery
+- Removed Bull Queue consumer - emails now send synchronously on registration/login/payment
+- Auth transactional templates: welcome email, login security alert, password reset
+- Payment: subscription invoice email with detailed billing
+- All emails sent from: adityabscit.2829@gmail.com
 
 ## 📁 Project Structure
 
