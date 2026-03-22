@@ -113,12 +113,31 @@ export const createJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 		throw new ErrorHandler(400, "All fields are required");
 	}
 
-	if (openings <= 0) {
+	const parsedSalary = parseFloat(salary);
+	const parsedOpenings = parseFloat(openings);
+
+	if (isNaN(parsedSalary)) {
+		throw new ErrorHandler(400, "Salary must be a valid number");
+	}
+
+	if (isNaN(parsedOpenings)) {
+		throw new ErrorHandler(400, "Openings must be a valid number");
+	}
+
+	if (parsedOpenings <= 0) {
 		throw new ErrorHandler(400, "Openings must be greater than 0");
 	}
 
-	if (salary <= 0) {
+	if (parsedOpenings > 999) {
+		throw new ErrorHandler(400, "Openings cannot exceed 999");
+	}
+
+	if (parsedSalary <= 0) {
 		throw new ErrorHandler(400, "Salary must be greater than 0");
+	}
+
+	if (parsedSalary > 99999999.99) {
+		throw new ErrorHandler(400, "Salary cannot exceed 99,999,999.99");
 	}
 
 	const [company] = await sql`
@@ -134,7 +153,7 @@ export const createJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 
 	const [newJob] = await sql`
         INSERT INTO jobs (title, description, salary, location, job_type, openings, role, work_location, company_id, posted_by_recruiter_id)
-        VALUES (${title}, ${description}, ${salary}, ${location}, ${job_type}, ${openings}, ${role}, ${work_location}, ${company_id}, ${user.user_id}) RETURNING *
+        VALUES (${title}, ${description}, ${parsedSalary}, ${location}, ${job_type}, ${parsedOpenings}, ${role}, ${work_location}, ${company_id}, ${user.user_id}) RETURNING *
     `;
 
 	res.json({
@@ -182,22 +201,41 @@ export const updateJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 		);
 	}
 
-	if (openings < 0) {
+	const parsedUpdateSalary = salary !== undefined ? parseFloat(salary) : undefined;
+	const parsedUpdateOpenings = openings !== undefined ? parseFloat(openings) : undefined;
+
+	if (parsedUpdateSalary !== undefined && isNaN(parsedUpdateSalary)) {
+		throw new ErrorHandler(400, "Salary must be a valid number");
+	}
+
+	if (parsedUpdateOpenings !== undefined && isNaN(parsedUpdateOpenings)) {
+		throw new ErrorHandler(400, "Openings must be a valid number");
+	}
+
+	if (parsedUpdateOpenings !== undefined && parsedUpdateOpenings < 0) {
 		throw new ErrorHandler(400, "Openings cannot be negative");
 	}
 
-	if (salary <= 0) {
+	if (parsedUpdateOpenings !== undefined && parsedUpdateOpenings > 999) {
+		throw new ErrorHandler(400, "Openings cannot exceed 999");
+	}
+
+	if (parsedUpdateSalary !== undefined && parsedUpdateSalary <= 0) {
 		throw new ErrorHandler(400, "Salary must be greater than 0");
+	}
+
+	if (parsedUpdateSalary !== undefined && parsedUpdateSalary > 99999999.99) {
+		throw new ErrorHandler(400, "Salary cannot exceed 99,999,999.99");
 	}
 
 	const [updatedJob] = await sql`
         UPDATE jobs SET
             title = ${title},
             description = ${description},
-            salary = ${salary},
+            salary = ${parsedUpdateSalary ?? salary},
             location = ${location},
             job_type = ${job_type},
-            openings = ${openings},
+            openings = ${parsedUpdateOpenings ?? openings},
             role = ${role},
             work_location = ${work_location},
             is_active = ${is_active}
