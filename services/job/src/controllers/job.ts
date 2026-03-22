@@ -356,7 +356,7 @@ export const updateApplication = TryCatch(async (req: AuthenticatedRequest, res)
 	};
 
 	publishToTopic(message).catch((error) => {
-		console.error("Failed to publish message to Kafka topic:", error);
+		console.error("Failed to queue email to Bull Queue:", error);
 	});
 
 	res.json({
