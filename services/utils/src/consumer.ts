@@ -65,11 +65,14 @@ export const startSendMailConsumer = async () => {
 					host: "smtp.gmail.com",
 					port: 465,
 					secure: true,
+					family: 4, // Force IPv4 to bypass IPv6 issues on Railway
 					auth: {
 						user: process.env.SMTP_USER,
 						pass: process.env.SMTP_PASS,
 					},
-				});
+					connectionTimeout: 5000,
+					socketTimeout: 5000,
+				} as any);
 
 				const result = await transporter.sendMail({
 					from: "Hireheaven <no-reply>",
