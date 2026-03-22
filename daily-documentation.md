@@ -1898,14 +1898,136 @@ Content-Type: application/json
 
 ---
 
+## Day 44 — Resend Email API Integration + Bull Queue for Async Processing
+**Goal:** Email delivery stack ko SendGrid से Resend API पर migrate करके Bull Queue के साथ async job processing implement करना।
+
+**Problem Identified & Solution**
+- SendGrid direct API calls काम कर रहे थे पर reliable async queue pattern नहीं था
+- Job statusupdate emails immediate नहीं जा रहे थे, important notifications delay हो रहे थे
+- Solution: Resend API + Bull Queue (Redis-backed) = instant auth/payment emails + async job notifications
+
+**Highlights**
+- **Email Provider Migration**: SendGrid से Resend API पर switch.  
+  [services/auth/src/controllers/auth.ts](services/auth/src/controllers/auth.ts)  
+  [services/payment/src/controllers/payment.ts](services/payment/src/controllers/payment.ts)  
+  [services/utils/src/consumer.ts](services/utils/src/consumer.ts)
+  - `@sendgrid/mail` remove करके `resend` package (v3.2.0) add किया
+  - Auth Service: Welcome, Login Alert, Password Reset emails (direct Resend calls)
+  - Payment Service: Subscription Invoice (direct Resend calls)
+  - Job Service: Application Status Updates (Bull Queue → Resend)
+
+- **Bull Queue Implementation** (Redis-based async processing):
+  - Producer Setup:  
+    [services/job/src/producer.ts](services/job/src/producer.ts)
+    - `initEmailQueue()` Bull Queue initialize करता है with Upstash Redis
+    - `publishToTopic()` emails को queue में add करता है
+    - Retry logic: 3 attempts with exponential backoff (2s initial delay)
+  
+  - Consumer Setup:  
+    [services/utils/src/consumer.ts](services/utils/src/consumer.ts)  
+    [services/utils/src/index.ts](services/utils/src/index.ts)
+    - `startSendMailConsumer()` queue processing start करता है
+    - 5 concurrent jobs process करता है simultaneously
+    - Job success/failure logging with email ID tracking
+    - Automatic failure retry mechanism built-in
+
+- **Environment Configuration**:  
+  [services/auth/.env.example](services/auth/.env.example)  
+  [services/job/.env.example](services/job/.env.example)  
+  [services/payment/.env.example](services/payment/.env.example)  
+  [services/utils/.env](services/utils/.env)
+  - `RESEND_API_KEY=re_JMaXBpcm_EA9y4aFAEnNabRTxEvhQxxb5` सभी services में
+  - `REDIS_URL` connection pooling + TLS के साथ Upstash support
+
+- **Package Dependencies Updated**:
+  - Removed: `@sendgrid/mail` सभी services से
+  - Added: `resend` सभी services में
+  - Added: `bull` (v4.11.5) job + utils services में
+  - Already had: `redis` (v5.10.0) connection support
+
+- **Key Fixes Applied**:
+  - Utils service startup में `startSendMailConsumer()` initialization add किया (पहले missing था)
+  - Resend response structure fix: `result?.data?.id` for email tracking ID
+  - Error handling improve की: Resend API errors + Bull Queue failures दोनों के लिए
+  - Sender email update: `onboarding@resend.dev` (verified domain) सभी emails में
+
+**Architecture Flow (NEW)**
+```
+Immediate (Auth/Payment) Flow:
+─────────────────────────────
+User Register/Login/Payment Event
+  ↓
+Auth/Payment Controller
+  ↓
+Resend.emails.send() [DIRECT/SYNC]
+  ↓
+SendGrid Instant Delivery
+  ↓
+Email in inbox within seconds
+
+Async (Job Updates) Flow:
+────────────────────────
+Job Status Update Event
+  ↓
+Job Controller → publishToTopic()
+  ↓
+Bull Queue (Redis) stores job
+  ↓
+Return Immediate API Response
+  ↓
+Background: Utils Consumer processes
+  ↓
+Resend API delivers email
+  ↓
+Auto-retry on failure (max 3 attempts)
+```
+
+**Email Flows Implemented**
+- **Auth Service (Direct/Sync)**:
+  - Welcome email on registration
+  - Login security alert on login
+  - Password reset link on forgot password (15m JWT expiry)
+  
+- **Payment Service (Direct/Sync)**:
+  - Subscription invoice on payment success
+  - Includes: plan name, amount, expiry date, invoice ID
+  
+- **Job Service (Async/Queue)**:
+  - Application status updates sent to applicants
+  - Status: Submitted → Reviewing → Accepted/Rejected
+  - Non-blocking: API response immediate, email sent background में
+
+**Deployment Checklist**
+- ✅ Set `RESEND_API_KEY` in production environment
+- ✅ Ensure `REDIS_URL` points to working Redis instance (Upstash or local)
+- ✅ Auth/Payment services start with Resend initialization
+- ✅ Util service starts with Bull Queue consumer (`startSendMailConsumer()` called)
+- ✅ Test email sending: registration → welcome email should arrive
+- ✅ Test async emails: job status update → email in queue → delivered with retry
+
+**Tech Details**
+- Resend API Response: `{ data: { id: "email_id_..." }, error?: null }`
+- Bull Queue Format: Job ID tracking, timestamp, retry counter in Redis
+- Retry Strategy: Exponential backoff (2s → 4s → 8s) across 3 attempts
+- Sender Verification: `onboarding@resend.dev` is pre-verified by Resend
+- TLS Connection: Bull Queue supports `redis-url` with `tls: { rejectUnauthorized: false }` for Upstash
+
+**Cost & Performance**
+- Resend: Free tier 100 emails/day, pay-as-you-go after
+- Redis (Upstash): Free tier 10,000 commands/day sufficient for queue
+- Queue reduces SendGrid direct API rate limits hitting
+- Async processing prevents API blocking on high traffic
+
+---
+
 ## Tech Stack Summary
 - **Node.js + Express + TypeScript** (`express`, `typescript`)
 - **PostgreSQL (Neon)** (`@neondatabase/serverless`)
-- **Redis** (`redis`)
-- **Kafka** (`kafkajs`)
+- **Redis** (`redis`) - For password reset tokens + Bull Queue
+- **Bull Queue** (`bull`) - Async job queue processor
+- **Resend API** (`resend`) - Transactional email delivery
 - **Cloudinary** (`cloudinary`)
 - **Google Gemini API** (`@google/genai`)
-- **Nodemailer** (`nodemailer`)
 - **Multer + DataURI** (`multer`, `datauri`)
 - **JWT + bcrypt** (`jsonwebtoken`, `bcrypt`)
 - **Axios** (`axios`) - HTTP client for inter-service communication

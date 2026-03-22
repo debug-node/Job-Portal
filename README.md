@@ -28,18 +28,27 @@ This project provides a complete hiring workflow for jobseekers and recruiters:
 - Frontend: Next.js, React, Tailwind CSS, shadcn/ui
 - Database: PostgreSQL (Neon)
 - Cache: Redis (Upstash)
-- Email Delivery: SendGrid API (Direct)
+- Email Delivery: Resend API (Bull Queue + Async Processing)
 - File Storage: Cloudinary
 - Payments: Razorpay
 - AI: Google Gemini API
 
-## 🆕 Latest Update
+## 🆕 Latest Update - Resend Email Integration
 
-- Email delivery switched from Bull Queue to direct SendGrid API for instant delivery
-- Removed Bull Queue consumer - emails now send synchronously on registration/login/payment
+- Email delivery **switched from SendGrid to Resend API** for better reliability
+- Implemented **Bull Queue with Redis** for async email processing (non-blocking)
+  - Producer (Job Service) queues email jobs
+  - Consumer (Utils Service) processes from queue asynchronously
+  - Automatic retry logic with exponential backoff
 - Auth transactional templates: welcome email, login security alert, password reset
-- Payment: subscription invoice email with detailed billing
-- All emails sent from: adityabscit.2829@gmail.com
+- Payment: subscription invoice email with detailed billing  
+- Job applications: status update notifications via email
+- All emails sent from: `onboarding@resend.dev` (verified sender)
+- Email integration:
+  - Auth Service: Welcome, Login Alert, Password Reset
+  - Payment Service: Subscription Invoice
+  - Job Service: Job Application Status Updates (via Bull Queue)
+- Environment variable: `RESEND_API_KEY=re_JMaXBpcm_EA9y4aFAEnNabRTxEvhQxxb5`
 
 ## 📁 Project Structure
 
