@@ -5,9 +5,12 @@ import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/TryCatch.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import sgMail from "@sendgrid/mail";
 import { forgotPasswordTemplate, welcomeTemplate, loginAlertTemplate, subscriptionInvoiceTemplate } from "../templete.js";
-import { publishToTopic } from "../producer.js";
 import { redisClient } from "../index.js";
+
+// Initialize SendGrid
+sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
 
 export const registerUser = TryCatch(async (req, res, next) => {
 	const { name, email, password, phoneNumber, role, bio } = req.body;
@@ -66,11 +69,12 @@ export const registerUser = TryCatch(async (req, res, next) => {
 	// Send welcome email
 	const welcomeMessage = {
 		to: registeredUser?.email,
+		from: "adityabscit.2829@gmail.com",
 		subject: "Welcome to HireHeaven - Account Created Successfully",
 		html: welcomeTemplate(registeredUser?.name),
 	};
 
-	publishToTopic(welcomeMessage).catch((err) => {
+	sgMail.send(welcomeMessage).catch((err) => {
 		console.error("❌ failed to send welcome email", err);
 	});
 
@@ -116,11 +120,12 @@ export const loginUser = TryCatch(async (req, res, next) => {
 	const loginTime = new Date().toLocaleString();
 	const loginMessage = {
 		to: userObject?.email,
+		from: "adityabscit.2829@gmail.com",
 		subject: "Login Alert - HireHeaven",
 		html: loginAlertTemplate(userObject?.name, loginTime),
 	};
 
-	publishToTopic(loginMessage).catch((err) => {
+	sgMail.send(loginMessage).catch((err) => {
 		console.error("❌ failed to send login alert email", err);
 	});
 
@@ -163,11 +168,12 @@ export const forgotPassword = TryCatch(async (req, res, next) => {
 
 	const message = {
 		to: email,
+		from: "adityabscit.2829@gmail.com",
 		subject: "Reset Your Password - Hireheaven",
 		html: forgotPasswordTemplate(resetLink),
 	};
 
-	publishToTopic(message).catch((err) => {
+	sgMail.send(message).catch((err) => {
 		console.error("❌ failed to send email message", err);
 	});
 
