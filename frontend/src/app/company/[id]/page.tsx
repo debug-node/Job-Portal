@@ -335,11 +335,13 @@ const CompanyPage = () => {
 													id="salary"
 													type="number"
 													placeholder="Enter salary"
+													min="0"
 													className="h-11 cursor-pointer"
 													value={salary}
-													onChange={(e) =>
-														setsalary(e.target.value)
-													}
+													onChange={(e) => {
+														const value = parseInt(e.target.value) || 0;
+														setsalary(String(value < 0 ? 0 : value));
+													}}
 												/>
 											</div>
 
@@ -356,9 +358,10 @@ const CompanyPage = () => {
 													min="1"
 													className="h-11 cursor-pointer"
 													value={openings}
-													onChange={(e) =>
-														setopenings(e.target.value)
-													}
+													onChange={(e) => {
+														const value = parseInt(e.target.value) || 1;
+														setopenings(String(value < 1 ? 1 : value));
+													}}
 												/>
 											</div>
 
@@ -645,9 +648,13 @@ const CompanyPage = () => {
 										id="salary"
 										type="number"
 										placeholder="Enter salary"
+										min="0"
 										className="h-11 cursor-pointer"
 										value={salary}
-										onChange={(e) => setsalary(e.target.value)}
+										onChange={(e) => {
+											const value = parseInt(e.target.value) || 0;
+											setsalary(String(value < 0 ? 0 : value));
+										}}
 									/>
 								</div>
 
@@ -664,7 +671,10 @@ const CompanyPage = () => {
 										min="1"
 										className="h-11 cursor-pointer"
 										value={openings}
-										onChange={(e) => setopenings(e.target.value)}
+										onChange={(e) => {
+											const value = parseInt(e.target.value) || 1;
+											setopenings(String(value < 1 ? 1 : value));
+										}}
 									/>
 								</div>
 
