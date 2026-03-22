@@ -11,7 +11,7 @@ interface EmailMessage {
 
 let emailQueue: Queue.Queue;
 
-export const connectKafka = async () => {
+export const initEmailQueue = async () => {
 	try {
 		emailQueue = new Queue("send-mail", process.env.REDIS_URL as string, {
 			redis: {
@@ -74,7 +74,7 @@ export const publishToTopic = async (message: EmailMessage): Promise<void> => {
 	throw new Error(`❌ Failed to queue email after ${maxRetries} attempts: ${lastError?.message}`);
 };
 
-export const disconnectKafka = async (): Promise<void> => {
+export const closeQueue = async (): Promise<void> => {
 	if (emailQueue) {
 		await emailQueue.close();
 	}
