@@ -863,6 +863,39 @@
 
 ---
 
+## Day 40 — Queue Naming Cleanup + Auth Logging Hardening
+**Goal:** Bull Queue migration ke baad naming consistency improve karna, auth error logs harden karna, aur frontend lint-safe subscription check clarify karna.
+
+**Highlights**
+- Auth service queue lifecycle naming Kafka terminology se Bull terminology me normalize ki gayi.  
+  [services/auth/src/app.ts](services/auth/src/app.ts)  
+  [services/auth/src/producer.ts](services/auth/src/producer.ts)
+  - `connectKafka()` rename karke `initEmailQueue()` kiya gaya
+  - `disconnectKafka()` rename karke `closeQueue()` kiya gaya
+  - App bootstrap ab `initEmailQueue()` call karta hai
+- Job service me bhi same naming cleanup apply hua for queue initialization.  
+  [services/job/src/app.ts](services/job/src/app.ts)  
+  [services/job/src/producer.ts](services/job/src/producer.ts)
+  - `connectKafka()` -> `initEmailQueue()`
+  - `disconnectKafka()` -> `closeQueue()`
+- Job controller error message wording Bull Queue context ke hisaab se update hui.  
+  [services/job/src/controllers/job.ts](services/job/src/controllers/job.ts)
+  - Publish failure log ab Kafka topic ke badle Bull Queue ko reference karta hai
+- Job aur Payment auth middleware me token validation failure logging improve hui.  
+  [services/job/src/middleware/auth.ts](services/job/src/middleware/auth.ts)  
+  [services/payment/src/middlewares/auth.ts](services/payment/src/middlewares/auth.ts)
+  - Generic `console.log(error)` replace karke scoped `console.error` + message logging add hua
+- Frontend account info component me memoized subscription check ke liye lint intent explicitly documented ki gayi.  
+  [frontend/src/app/account/components/info.tsx](frontend/src/app/account/components/info.tsx)
+  - `react-hooks/purity` rule ke liye targeted `eslint-disable-next-line` add hua jaha `Date.now()` time-based check required hai
+
+**Key Flows**
+- **Queue Bootstrap Flow**: service start -> `initEmailQueue()` call -> queue client initialize -> request handlers non-blocking publish continue.
+- **Failure Observability Flow**: auth failure catch -> scoped `console.error` message -> consistent debugging context across services.
+- **Time-based Subscription Flow**: subscription timestamp compare with current time (`Date.now()`) -> active/inactive badge resolution.
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
