@@ -896,6 +896,26 @@
 
 ---
 
+## Day 41 — Reference-Only Change Mapping
+**Goal:** Latest refactor changes ko quick traceability ke liye sirf direct file references ke through map karna.
+
+**Highlights**
+- [services/auth/src/app.ts](services/auth/src/app.ts)
+- [services/auth/src/producer.ts](services/auth/src/producer.ts)
+- [services/job/src/app.ts](services/job/src/app.ts)
+- [services/job/src/producer.ts](services/job/src/producer.ts)
+- [services/job/src/controllers/job.ts](services/job/src/controllers/job.ts)
+- [services/job/src/middleware/auth.ts](services/job/src/middleware/auth.ts)
+- [services/payment/src/middlewares/auth.ts](services/payment/src/middlewares/auth.ts)
+- [frontend/src/app/account/components/info.tsx](frontend/src/app/account/components/info.tsx)
+
+**Key Flows**
+- [Auth Queue Init Flow](services/auth/src/app.ts)
+- [Job Queue Init Flow](services/job/src/app.ts)
+- [Subscription Status Flow](frontend/src/app/account/components/info.tsx)
+
+---
+
 ## API Endpoints Table
 
 ### Auth Service (Base: `/api/auth`)
