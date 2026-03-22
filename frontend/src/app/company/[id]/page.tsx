@@ -353,6 +353,7 @@ const CompanyPage = () => {
 													id="openings"
 													type="number"
 													placeholder="Eg. 5"
+													min="1"
 													className="h-11 cursor-pointer"
 													value={openings}
 													onChange={(e) =>
@@ -660,6 +661,7 @@ const CompanyPage = () => {
 										id="openings"
 										type="number"
 										placeholder="Eg. 5"
+										min="1"
 										className="h-11 cursor-pointer"
 										value={openings}
 										onChange={(e) => setopenings(e.target.value)}

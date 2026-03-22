@@ -113,6 +113,10 @@ export const createJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 		throw new ErrorHandler(400, "All fields are required");
 	}
 
+	if (openings <= 0) {
+		throw new ErrorHandler(400, "Openings must be greater than 0");
+	}
+
 	const [company] = await sql`
         SELECT company_id FROM companies WHERE company_id = ${company_id} AND recruiter_id = ${user.user_id}
     `;
@@ -172,6 +176,10 @@ export const updateJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 			403,
 			"Forbidden: You don't have authorized to update this job",
 		);
+	}
+
+	if (openings < 0) {
+		throw new ErrorHandler(400, "Openings cannot be negative");
 	}
 
 	const [updatedJob] = await sql`
