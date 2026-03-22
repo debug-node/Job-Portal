@@ -244,7 +244,7 @@ export const applyForJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 		throw new ErrorHandler(400, "Job ID is required to apply for a job");
 	}
 
-	const [job] = await sql`SELECT is_active FROM jobs WHERE job_id = ${job_id}`;
+	const [job] = await sql`SELECT is_active, openings FROM jobs WHERE job_id = ${job_id}`;
 
 	if (!job) {
 		throw new ErrorHandler(404, "Job not found");
@@ -252,6 +252,10 @@ export const applyForJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 
 	if (!job.is_active) {
 		throw new ErrorHandler(400, "Cannot apply for an inactive job");
+	}
+
+	if (job.openings <= 0) {
+		throw new ErrorHandler(400, "No openings available for this job");
 	}
 
 	const now = Date.now();
@@ -267,6 +271,9 @@ export const applyForJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 	try {
 		[newApplication] = await sql`
         INSERT INTO applications (job_id, applicant_id, applicant_email, resume, subscribed) VALUES (${job_id}, ${applicant_id}, ${user?.email}, ${resume}, ${isSubscribed})`;
+		
+		// Decrement openings count after successful application
+		await sql`UPDATE jobs SET openings = openings - 1 WHERE job_id = ${job_id} AND openings > 0`;
 	} catch (error: any) {
 		if (error.code === "23505") {
 			throw new ErrorHandler(409, "You have already applied for this job");
