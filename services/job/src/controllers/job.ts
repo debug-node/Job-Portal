@@ -109,27 +109,54 @@ export const createJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 		company_id,
 	} = req.body;
 
-	if (!title || !description || !openings || !role || !salary || !location) {
+	if (!title || !description || !openings || !role || !salary || !location || !job_type || !work_location || !company_id) {
 		throw new ErrorHandler(400, "All fields are required");
 	}
 
+	if (title.trim().length === 0) {
+		throw new ErrorHandler(400, "Title cannot be empty");
+	}
+
+	if (description.trim().length === 0) {
+		throw new ErrorHandler(400, "Description cannot be empty");
+	}
+
+	const validJobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
+	if (!validJobTypes.includes(job_type)) {
+		throw new ErrorHandler(400, `Job type must be one of: ${validJobTypes.join(', ')}`);
+	}
+
+	const validWorkLocations = ['On-site', 'Remote', 'Hybrid'];
+	if (!validWorkLocations.includes(work_location)) {
+		throw new ErrorHandler(400, `Work location must be one of: ${validWorkLocations.join(', ')}`);
+	}
+
+	const parsedCompanyId = parseInt(company_id, 10);
+	if (isNaN(parsedCompanyId) || parsedCompanyId <= 0) {
+		throw new ErrorHandler(400, "Company ID must be a valid positive number");
+	}
+
 	const parsedSalary = parseFloat(salary);
-	const parsedOpenings = parseFloat(openings);
+	const parsedOpenings = parseInt(openings.toString(), 10);
 
 	if (isNaN(parsedSalary)) {
 		throw new ErrorHandler(400, "Salary must be a valid number");
 	}
 
 	if (isNaN(parsedOpenings)) {
-		throw new ErrorHandler(400, "Openings must be a valid number");
+		throw new ErrorHandler(400, "Openings must be a valid whole number (integer)");
+	}
+
+	if (parseFloat(openings) !== parsedOpenings) {
+		throw new ErrorHandler(400, "Openings must be a whole number, not a decimal");
 	}
 
 	if (parsedOpenings <= 0) {
 		throw new ErrorHandler(400, "Openings must be greater than 0");
 	}
 
-	if (parsedOpenings > 999) {
-		throw new ErrorHandler(400, "Openings cannot exceed 999");
+	if (parsedOpenings > 9999) {
+		throw new ErrorHandler(400, "Openings cannot exceed 9999");
 	}
 
 	if (parsedSalary <= 0) {
@@ -141,7 +168,7 @@ export const createJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 	}
 
 	const [company] = await sql`
-        SELECT company_id FROM companies WHERE company_id = ${company_id} AND recruiter_id = ${user.user_id}
+        SELECT company_id FROM companies WHERE company_id = ${parsedCompanyId} AND recruiter_id = ${user.user_id}
     `;
 
 	if (!company) {
@@ -153,7 +180,7 @@ export const createJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 
 	const [newJob] = await sql`
         INSERT INTO jobs (title, description, salary, location, job_type, openings, role, work_location, company_id, posted_by_recruiter_id)
-        VALUES (${title}, ${description}, ${parsedSalary}, ${location}, ${job_type}, ${parsedOpenings}, ${role}, ${work_location}, ${company_id}, ${user.user_id}) RETURNING *
+        VALUES (${title}, ${description}, ${parsedSalary}, ${location}, ${job_type}, ${parsedOpenings}, ${role}, ${work_location}, ${parsedCompanyId}, ${user.user_id}) RETURNING *
     `;
 
 	res.json({
@@ -170,7 +197,7 @@ export const updateJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 	}
 
 	if (user.role !== "recruiter") {
-		throw new ErrorHandler(403, "Forbidden: Only recruiters can create jobs");
+		throw new ErrorHandler(403, "Forbidden: Only recruiters can update jobs");
 	}
 
 	const {
@@ -201,23 +228,45 @@ export const updateJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 		);
 	}
 
-	const parsedUpdateSalary = salary !== undefined ? parseFloat(salary) : undefined;
-	const parsedUpdateOpenings = openings !== undefined ? parseFloat(openings) : undefined;
+	const parsedUpdateSalary = salary !== undefined && salary !== null ? parseFloat(salary) : undefined;
+	const parsedUpdateOpenings = openings !== undefined && openings !== null ? parseInt(openings.toString(), 10) : undefined;
+
+	if (title !== undefined && title.trim().length === 0) {
+		throw new ErrorHandler(400, "Title cannot be empty");
+	}
+
+	if (description !== undefined && description.trim().length === 0) {
+		throw new ErrorHandler(400, "Description cannot be empty");
+	}
+
+	const validJobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
+	if (job_type !== undefined && !validJobTypes.includes(job_type)) {
+		throw new ErrorHandler(400, `Job type must be one of: ${validJobTypes.join(', ')}`);
+	}
+
+	const validWorkLocations = ['On-site', 'Remote', 'Hybrid'];
+	if (work_location !== undefined && !validWorkLocations.includes(work_location)) {
+		throw new ErrorHandler(400, `Work location must be one of: ${validWorkLocations.join(', ')}`);
+	}
 
 	if (parsedUpdateSalary !== undefined && isNaN(parsedUpdateSalary)) {
 		throw new ErrorHandler(400, "Salary must be a valid number");
 	}
 
 	if (parsedUpdateOpenings !== undefined && isNaN(parsedUpdateOpenings)) {
-		throw new ErrorHandler(400, "Openings must be a valid number");
+		throw new ErrorHandler(400, "Openings must be a valid whole number (integer)");
+	}
+
+	if (openings !== undefined && parseFloat(openings) !== parsedUpdateOpenings) {
+		throw new ErrorHandler(400, "Openings must be a whole number, not a decimal");
 	}
 
 	if (parsedUpdateOpenings !== undefined && parsedUpdateOpenings < 0) {
 		throw new ErrorHandler(400, "Openings cannot be negative");
 	}
 
-	if (parsedUpdateOpenings !== undefined && parsedUpdateOpenings > 999) {
-		throw new ErrorHandler(400, "Openings cannot exceed 999");
+	if (parsedUpdateOpenings !== undefined && parsedUpdateOpenings > 9999) {
+		throw new ErrorHandler(400, "Openings cannot exceed 9999");
 	}
 
 	if (parsedUpdateSalary !== undefined && parsedUpdateSalary <= 0) {
@@ -230,15 +279,15 @@ export const updateJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 
 	const [updatedJob] = await sql`
         UPDATE jobs SET
-            title = ${title},
-            description = ${description},
-            salary = ${parsedUpdateSalary ?? salary},
-            location = ${location},
-            job_type = ${job_type},
-            openings = ${parsedUpdateOpenings ?? openings},
-            role = ${role},
-            work_location = ${work_location},
-            is_active = ${is_active}
+            title = ${title ?? undefined},
+            description = ${description ?? undefined},
+            salary = ${parsedUpdateSalary ?? undefined},
+            location = ${location ?? undefined},
+            job_type = ${job_type ?? undefined},
+            openings = ${parsedUpdateOpenings ?? undefined},
+            role = ${role ?? undefined},
+            work_location = ${work_location ?? undefined},
+            is_active = ${is_active ?? undefined}
         WHERE job_id = ${req.params.jobId} RETURNING *;
     `;
 
