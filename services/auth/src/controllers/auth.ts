@@ -5,12 +5,16 @@ import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/TryCatch.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import sgMail from "@sendgrid/mail";
-import { forgotPasswordTemplate, welcomeTemplate, loginAlertTemplate, subscriptionInvoiceTemplate } from "../templete.js";
+import { Resend } from "resend";
+import {
+	forgotPasswordTemplate,
+	welcomeTemplate,
+	loginAlertTemplate,
+} from "../templete.js";
 import { redisClient } from "../index.js";
 
-// Initialize SendGrid
-sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY as string);
 
 export const registerUser = TryCatch(async (req, res, next) => {
 	const { name, email, password, phoneNumber, role, bio } = req.body;
@@ -69,12 +73,12 @@ export const registerUser = TryCatch(async (req, res, next) => {
 	// Send welcome email
 	const welcomeMessage = {
 		to: registeredUser?.email,
-		from: "adityabscit.2829@gmail.com",
+		from: "onboarding@resend.dev",
 		subject: "Welcome to HireHeaven - Account Created Successfully",
 		html: welcomeTemplate(registeredUser?.name),
 	};
 
-	sgMail.send(welcomeMessage).catch((err) => {
+	resend.emails.send(welcomeMessage).catch((err) => {
 		console.error("❌ failed to send welcome email", err);
 	});
 
@@ -120,12 +124,12 @@ export const loginUser = TryCatch(async (req, res, next) => {
 	const loginTime = new Date().toLocaleString();
 	const loginMessage = {
 		to: userObject?.email,
-		from: "adityabscit.2829@gmail.com",
+		from: "onboarding@resend.dev",
 		subject: "Login Alert - HireHeaven",
 		html: loginAlertTemplate(userObject?.name, loginTime),
 	};
 
-	sgMail.send(loginMessage).catch((err) => {
+	resend.emails.send(loginMessage).catch((err) => {
 		console.error("❌ failed to send login alert email", err);
 	});
 
@@ -168,12 +172,12 @@ export const forgotPassword = TryCatch(async (req, res, next) => {
 
 	const message = {
 		to: email,
-		from: "adityabscit.2829@gmail.com",
+		from: "onboarding@resend.dev",
 		subject: "Reset Your Password - Hireheaven",
 		html: forgotPasswordTemplate(resetLink),
 	};
 
-	sgMail.send(message).catch((err) => {
+	resend.emails.send(message).catch((err) => {
 		console.error("❌ failed to send email message", err);
 	});
 
