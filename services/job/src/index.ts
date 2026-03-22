@@ -45,7 +45,7 @@ async function initDB() {
                 salary NUMERIC(10, 2),
                 location VARCHAR(255),
                 job_type job_type NOT NULL,
-                openings NUMERIC(3, 1) NOT NULL,
+                openings NUMERIC(4, 0) NOT NULL,
                 role VARCHAR(255) NOT NULL,
                 work_location work_location NOT NULL,
                 company_id INTEGER NOT NULL REFERENCES companies(company_id) ON DELETE CASCADE,
@@ -54,6 +54,13 @@ async function initDB() {
                 is_active BOOLEAN DEFAULT TRUE
             )
         `;
+
+		// Alter existing table if it exists (migration for existing databases)
+		try {
+			await sql`ALTER TABLE jobs ALTER COLUMN openings TYPE NUMERIC(4, 0)`;
+		} catch (error) {
+			console.log("Table openings column already has correct type or doesn't exist yet");
+		}
 
 		await sql`
             CREATE TABLE IF NOT EXISTS applications (
