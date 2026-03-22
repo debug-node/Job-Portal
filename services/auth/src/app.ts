@@ -1,6 +1,6 @@
 import express from "express";
 import authRoutes from "./routes/auth.js";
-import { connectKafka } from "./producer.js";
+import { initEmailQueue } from "./producer.js";
 import cors from "cors";
 
 const app = express();
@@ -9,7 +9,7 @@ app.use(express.json());
 
 // Initialize Bull Queue for async email processing (non-blocking)
 // Queue will be ready by the time requests come in
-connectKafka().catch((error) => {
+initEmailQueue().catch((error) => {
 	console.error("❌ Failed to initialize Bull Queue:", error);
 });
 
