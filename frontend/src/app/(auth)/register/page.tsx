@@ -102,7 +102,7 @@ const RegisterPage = () => {
 									id="role"
 									value={role}
 									onChange={(e) => setRole(e.target.value)}
-									className="w-full h-11 pl-10 pr-4 border-2 border-gray-300 rounded-md bg-white text-gray-900 font-medium focus:outline-none focus:border-blue-600"
+								className="w-full h-11 pl-10 pr-4 border-2 border-gray-300 rounded-md bg-white text-gray-900 font-medium focus:outline-none focus:border-blue-600 hover:border-blue-400 hover:bg-blue-50 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-600 dark:hover:border-blue-400 dark:hover:bg-slate-700"
 									required>
 									<option value="">Select your role</option>
 									<option value="jobseeker">Find a Job</option>
@@ -200,23 +200,20 @@ const RegisterPage = () => {
 												className="text-sm font-medium">
 												Resume (PDF)
 											</Label>
-											<div className="relative">
-												<Lock className="icon-style" />
-												<Input
-													id="resume"
-													type="file"
-													accept="application/pdf"
-													onChange={(e) => {
-														if (
-															e.target.files &&
-															e.target.files[0]
-														) {
-															setResume(e.target.files[0]);
-														}
-													}}
-													className="h-11 cursor-pointer"
-												/>
-											</div>
+											<Input
+												id="resume"
+												type="file"
+												accept="application/pdf"
+												onChange={(e) => {
+													if (
+														e.target.files &&
+														e.target.files[0]
+													) {
+														setResume(e.target.files[0]);
+													}
+												}}
+												className="h-11 cursor-pointer"
+											/>
 										</div>
 
 										<div className="space-y-2">
