@@ -7,12 +7,35 @@ import { createClient } from "redis";
 
 export const redisClient = createClient({
 	url: process.env.REDIS_URL,
+	socket: {
+		reconnectStrategy: (retries) => {
+			if (retries > 10) {
+				console.error("❌ Max Redis reconnection attempts reached");
+				return new Error("Max reconnection retries exceeded");
+			}
+			return Math.min(retries * 50, 500);
+		},
+	},
 });
 
-redisClient
-	.connect()
-	.then(() => console.log("✅ Connected to Redis"))
-	.catch(console.error);
+// Add error handlers
+redisClient.on("error", (err) => {
+	console.error("❌ Redis Error:", err.message);
+	// Don't crash the app, just log the error
+});
+
+redisClient.on("connect", () => {
+	console.log("✅ Connected to Redis");
+});
+
+redisClient.on("reconnecting", () => {
+	console.log("🔄 Attempting to reconnect to Redis...");
+});
+
+redisClient.connect().catch((err) => {
+	console.error("❌ Failed to connect to Redis:", err.message);
+	// Don't exit, app should still work without Redis for now
+});
 
 async function initDb() {
 	try {
@@ -65,8 +88,6 @@ async function initDb() {
 
 initDb().then(() => {
 	app.listen(process.env.PORT, () => {
-		console.log(
-			`Auth service is running on http://localhost:${process.env.PORT}`,
-		);
+		console.log(`Auth service is running on http://localhost:${process.env.PORT}`);
 	});
 });
