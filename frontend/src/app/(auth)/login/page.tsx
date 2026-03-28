@@ -22,13 +22,7 @@ const LoginPage = () => {
 
 	useEffect(() => {
 		if (!loading && isAuth && user) {
-			router.replace(
-				user.role === "recruiter"
-					? "/account"
-					: user.role === "admin"
-						? "/admin"
-						: "/jobs",
-			);
+			router.replace(user.role === "recruiter" ? "/account" : "/jobs");
 		}
 	}, [isAuth, loading, router, user]);
 
@@ -59,8 +53,6 @@ const LoginPage = () => {
 			if (data.userObject?.role === "jobseeker") {
 				fetchApplications();
 				router.push("/jobs");
-			} else if (data.userObject?.role === "admin") {
-				router.push("/admin");
 			} else {
 				router.push("/account");
 			}
