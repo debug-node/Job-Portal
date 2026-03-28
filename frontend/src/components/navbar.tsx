@@ -2,7 +2,16 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import { Button } from "./ui/button";
-import { Briefcase, Home, Info, LogOut, Menu, User, X } from "lucide-react";
+import {
+	Briefcase,
+	Home,
+	Info,
+	LayoutDashboard,
+	LogOut,
+	Menu,
+	User,
+	X,
+} from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { ModeToggle } from "./mode-toggle";
@@ -12,7 +21,12 @@ const NavBar = () => {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const { isAuth, user, loading, logoutUser } = useAppData();
-	const roleLabel = user?.role === "recruiter" ? "Recruiter" : "Job Seeker";
+	const roleLabel =
+		user?.role === "recruiter"
+			? "Recruiter"
+			: user?.role === "admin"
+				? "Admin"
+				: "Job Seeker";
 
 	const toggleMenu = () => {
 		setIsOpen(!isOpen);
@@ -64,7 +78,16 @@ const NavBar = () => {
 
 						{isAuth && (
 							<>
-								{user?.role === "recruiter" ? (
+								{user?.role === "admin" ? (
+									<Link href="/admin">
+										<Button
+											variant={"ghost"}
+											className="flex items-center gap-2 font-medium">
+											<LayoutDashboard size={16} />
+											Admin Panel
+										</Button>
+									</Link>
+								) : user?.role === "recruiter" ? (
 									<Link href={"/account"}>
 										<Button
 											variant={"ghost"}
@@ -136,6 +159,16 @@ const NavBar = () => {
 												</Button>
 											</Link>
 
+											{user?.role === "admin" && (
+												<Link href="/admin">
+													<Button
+														className="w-full justify-start gap-2"
+														variant={"ghost"}>
+														<LayoutDashboard size={16} /> Admin Panel
+													</Button>
+												</Link>
+											)}
+
 											<Button
 												className="w-full justify-start gap-2 mt-1"
 												variant={"ghost"}
@@ -205,7 +238,16 @@ const NavBar = () => {
 
 					{isAuth ? (
 						<>
-							{user?.role === "recruiter" ? (
+							{user?.role === "admin" ? (
+								<Link href="/admin" onClick={toggleMenu}>
+									<Button
+										variant={"ghost"}
+										className="w-full justify-start gap-3 h-11">
+										<LayoutDashboard size={18} />
+										Admin Panel
+									</Button>
+								</Link>
+							) : user?.role === "recruiter" ? (
 								<Link href={"/account"} onClick={toggleMenu}>
 									<Button
 										variant={"ghost"}

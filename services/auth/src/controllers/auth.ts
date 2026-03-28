@@ -23,6 +23,10 @@ export const registerUser = TryCatch(async (req, res, next) => {
 		throw new ErrorHandler(400, "All fields are required");
 	}
 
+	if (!["recruiter", "jobseeker"].includes(role)) {
+		throw new ErrorHandler(400, "Invalid role. Allowed roles: recruiter, jobseeker");
+	}
+
 	const existingUsers = await sql`SELECT user_id FROM users WHERE email = ${email}`;
 
 	if (existingUsers.length > 0) {

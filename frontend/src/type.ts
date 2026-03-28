@@ -56,7 +56,7 @@ export interface User {
 	name: string;
 	email: string;
 	phone_number: string;
-	role: "jobseeker" | "recruiter";
+	role: "jobseeker" | "recruiter" | "admin";
 	bio: string | null;
 	resume: string | null;
 	resume_public_id: string | null;
@@ -141,4 +141,34 @@ export interface Application {
 	job_title: string;
 	job_salary: number;
 	job_location: string;
+}
+
+export interface AdminDashboardStats {
+	totalUsers: number;
+	totalJobs: number;
+	totalCompanies: number;
+	totalApplications: number;
+}
+
+export interface AdminRecentUser {
+	user_id: number;
+	name: string;
+	email: string;
+	role: "jobseeker" | "recruiter" | "admin";
+	created_at: string;
+}
+
+export interface AdminRecentJob {
+	job_id: number;
+	title: string;
+	location: string | null;
+	is_active: boolean;
+	created_at: string;
+	company_name: string;
+}
+
+export interface AdminDashboardResponse {
+	stats: AdminDashboardStats;
+	recentUsers: AdminRecentUser[];
+	recentJobs: AdminRecentJob[];
 }

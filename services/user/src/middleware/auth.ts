@@ -7,7 +7,7 @@ interface User {
 	name: string;
 	email: string;
 	phone_number: string;
-	role: "jobseeker" | "recruiter";
+	role: "jobseeker" | "recruiter" | "admin";
 	bio: string | null;
 	resume: string | null;
 	resume_public_id: string | null;
@@ -105,4 +105,26 @@ export const isAuth = async (
 			message: "Authentication failed. Please login again.",
 		});
 	}
+};
+
+export const isAdmin = (
+	req: AuthenticatedRequest,
+	res: Response,
+	next: NextFunction,
+): void => {
+	if (!req.user) {
+		res.status(401).json({
+			message: "Authentication required",
+		});
+		return;
+	}
+
+	if (req.user.role !== "admin") {
+		res.status(403).json({
+			message: "Forbidden: Admin access only",
+		});
+		return;
+	}
+
+	next();
 };
