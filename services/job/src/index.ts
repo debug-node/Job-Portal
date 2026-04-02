@@ -32,7 +32,7 @@ async function initDB() {
                 website VARCHAR(255) NOT NULL,
                 logo VARCHAR(255) NOT NULL,
                 logo_public_id VARCHAR(255) NOT NULL,
-                recruiter_id INTEGER NOT NULL,
+                recruiter_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
         `;
@@ -49,7 +49,7 @@ async function initDB() {
                 role VARCHAR(255) NOT NULL,
                 work_location work_location NOT NULL,
                 company_id INTEGER NOT NULL REFERENCES companies(company_id) ON DELETE CASCADE,
-                posted_by_recruiter_id INTEGER NOT NULL,
+                posted_by_recruiter_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 is_active BOOLEAN DEFAULT TRUE
             )
@@ -66,7 +66,7 @@ async function initDB() {
             CREATE TABLE IF NOT EXISTS applications (
                 application_id SERIAL PRIMARY KEY,
                 job_id INTEGER NOT NULL REFERENCES jobs(job_id) ON DELETE CASCADE,
-                applicant_id INTEGER NOT NULL,
+                applicant_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                 applicant_email VARCHAR(255) NOT NULL,
                 status application_status NOT NULL DEFAULT 'Submitted',
                 resume VARCHAR(255) NOT NULL,
@@ -77,6 +77,33 @@ async function initDB() {
         `;
 
 		console.log("✅ Job service database initialized successfully");
+
+		// Add CASCADE DELETE constraints to existing tables (migration)
+		try {
+			// Check and add CASCADE DELETE for companies.recruiter_id
+			await sql`
+				ALTER TABLE companies
+				DROP CONSTRAINT IF EXISTS companies_recruiter_id_fkey,
+				ADD CONSTRAINT companies_recruiter_id_fkey 
+				FOREIGN KEY (recruiter_id) REFERENCES users(user_id) ON DELETE CASCADE
+			`;
+			console.log("✅ Companies CASCADE DELETE constraint updated");
+		} catch (error) {
+			console.log("ℹ️ Companies CASCADE DELETE constraint might already exist or table doesn't exist");
+		}
+
+		// Check and add CASCADE DELETE for jobs.posted_by_recruiter_id
+		try {
+			await sql`
+				ALTER TABLE jobs
+				DROP CONSTRAINT IF EXISTS jobs_posted_by_recruiter_id_fkey,
+				ADD CONSTRAINT jobs_posted_by_recruiter_id_fkey 
+				FOREIGN KEY (posted_by_recruiter_id) REFERENCES users(user_id) ON DELETE CASCADE
+			`;
+			console.log("✅ Jobs CASCADE DELETE constraint for recruiter updated");
+		} catch (error) {
+			console.log("ℹ️ Jobs CASCADE DELETE constraint might already exist or table doesn't exist");
+		}
 	} catch (error) {
 		console.error("Error initializing job service database tables:", error);
 		process.exit(1);
