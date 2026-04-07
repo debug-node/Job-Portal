@@ -288,8 +288,27 @@ export const applyForJob = TryCatch(async (req: AuthenticatedRequest, res) => {
 });
 
 export const getAllaplications = TryCatch(async (req: AuthenticatedRequest, res) => {
-	const applications = await sql`
-		SELECT a.*, j.title AS job_title, j.salary AS job_salary, j.location AS job_location FROM applications a JOIN jobs j ON a.job_id = j.job_id WHERE a.applicant_id = ${req.user?.user_id}`;
+	const skip = parseInt(req.query.skip as string) || 0;
+	const limit = parseInt(req.query.limit as string) || 10;
 
-	res.json(applications);
+	// Get total count
+	const countResult = await sql`
+		SELECT COUNT(*) as total FROM applications WHERE applicant_id = ${req.user?.user_id}`;
+	const total = countResult[0]?.total || 0;
+
+	// Get paginated applications
+	const applications = await sql`
+		SELECT a.*, j.title AS job_title, j.salary AS job_salary, j.location AS job_location 
+		FROM applications a 
+		JOIN jobs j ON a.job_id = j.job_id 
+		WHERE a.applicant_id = ${req.user?.user_id}
+		ORDER BY a.applied_at DESC
+		LIMIT ${limit} OFFSET ${skip}`;
+
+	res.json({
+		applications,
+		total,
+		skip,
+		limit,
+	});
 });
