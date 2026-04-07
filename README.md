@@ -29,7 +29,7 @@ This project provides a complete hiring workflow for jobseekers and recruiters:
 - **Frontend**: Next.js, React, Tailwind CSS, shadcn/ui
 - **Database**: PostgreSQL (Neon)
 - **Cache**: Redis (Upstash)
-- **Email Delivery**: Resend API (Bull Queue + Async Processing)
+- **Email Delivery**: Nodemailer with Gmail SMTP (Centralized via Utils service)
 - **File Storage**: Cloudinary
 - **Payments**: Razorpay
 - **AI**: Google Gemini API
