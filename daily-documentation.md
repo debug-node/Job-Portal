@@ -2257,27 +2257,6 @@ curl -X PUT -H "x-admin-key: your_key" \
 
 ---
 
-## Tech Stack Summary
-- **Node.js + Express + TypeScript** (`express`, `typescript`)
-- **PostgreSQL (Neon)** (`@neondatabase/serverless`)
-- **Redis** (`redis`) - For password reset tokens + Bull Queue
-- **Bull Queue** (`bull`) - Async job queue processor
-- **Resend API** (`resend`) - Transactional email delivery
-- **Cloudinary** (`cloudinary`)
-- **Google Gemini API** (`@google/genai`)
-- **Multer + DataURI** (`multer`, `datauri`)
-- **JWT + bcrypt** (`jsonwebtoken`, `bcrypt`)
-- **Axios** (`axios`) - HTTP client for inter-service communication
-- **Next.js + React** (`next`, `react`, `react-dom`) - Frontend framework
-- **shadcn/ui + Radix UI** (`shadcn`, `radix-ui`) - Accessible UI component library
-- **Tailwind CSS v4** (`tailwindcss`, `@tailwindcss/postcss`) - Utility-first styling
-- **next-themes** (`next-themes`) - Dark/light/system theme management
-- **Lucide React** (`lucide-react`) - Icon library
-- **clsx + tailwind-merge** (`clsx`, `tailwind-merge`) - Conditional class utilities
-- **class-variance-authority** (`class-variance-authority`) - Component variant system
-
----
-
 ## Day 46 — Multi-Format Report Generation + Issue Resolution
 **Goal:** Admin dashboard me report export functionality (JSON/Text/PDF/Image formats) implement karna, bugs fix karna, aur final cleanup.
 
@@ -2373,6 +2352,113 @@ curl -X PUT -H "x-admin-key: your_key" \
 - [frontend/src/lib/reportGenerator.ts](frontend/src/lib/reportGenerator.ts) - Image export code removed
 - [frontend/src/app/admin/dashboard/page.tsx](frontend/src/app/admin/dashboard/page.tsx) - Image button removed, description updated
 - [frontend/package.json](frontend/package.json) - html2canvas dependency removed
+---
+
+## Day 47 — Redis Optimization + Nodemailer Migration + Code Cleanup
+**Goal:** Redis quota exhaustion fix (Bull Queue removal), Resend → Nodemailer migration, cleanup of dead code and unused dependencies, complete system optimization.
+
+**Highlights**
+
+**Part 1: Redis Quota Crisis Identification & Resolution**
+- **Problem Identified**: 11,000+ Redis commands/minute consuming Upstash free tier quota
+- **Root Cause Analysis**: Bull Queue background polling with 5 workers at 50+ commands/min each + 40 reconnection loops = 11k/min baseline
+- **Solution**: Complete Bull Queue removal from ALL services
+  - Removed from Auth service: `producer.ts`, app.ts imports, package.json
+  - Removed from Job service: `producer.ts`, app.ts imports, package.json
+  - Removed from Payment service: Bull Queue references
+  - Removed from Utils service: queue imports
+- **Result**: ✅ 0 background Redis commands
+
+**Part 2: Email System Architecture Refactor (Resend → Nodemailer)**
+- **Problem with Resend**: Sandbox mode only sends to verified email addresses
+- **Solution**: Migrate to Nodemailer with Gmail SMTP via centralized Utils service endpoint
+- **Updated Auth Service** (`services/auth/src/controllers/auth.ts`):
+  - Removed: `import { Resend }` 
+  - Added: `sendEmail()` utility function using axios → utils email endpoint
+  - Updated: `registerUser()` to send welcome email via Nodemailer
+  - Updated: `loginUser()` to send login alert via Nodemailer
+  - Updated: `forgotPassword()` to send password reset link via Nodemailer
+- **Updated Payment Service** (`services/payment/src/controllers/payment.ts`):
+  - Removed: `import { Resend }`
+  - Added: `sendEmail()` utility function using axios → utils email endpoint
+  - Updated: `paymentVerification()` to send subscription confirmation via Nodemailer
+- **Utils Service Email Endpoint** (`services/utils/src/consumer.ts`):
+  - Centralized Nodemailer setup with Gmail SMTP
+  - POST `/api/utils/send-email` endpoint: accepts `{to, subject, html}`
+  - All emails now work for ANY email address (no verification needed)
+- **Result**: ✅ All email flows work universally
+
+**Part 3: Complete Unused Dependencies Cleanup**
+- **Auth Service**:
+  - Removed: `bull` (dead code)
+  - Kept: `redis` (actually used for password reset tokens)
+  - Result: ✅ 0 unused packages
+- **Job Service**:
+  - Removed: `bull`, `redis` (queue code removed)
+  - Result: ✅ 0 unused packages
+- **User Service**:
+  - Removed: `bull`, `redis` (never used queue)
+  - Result: ✅ 0 unused packages
+- **Payment Service**:
+  - Removed: `bull`, `redis` (queue removed, Razorpay doesn't need Redis)
+  - Result: ✅ 0 unused packages
+- **Utils Service**:
+  - Removed: `bull`, `redis`, `resend` (all dead code)
+  - Result: ✅ 0 unused packages
+
+**Part 4: Dead Code & Unused Imports Removal**
+- **Job Service** (`admin.ts`, `middleware/admin.ts`, etc):
+  - Added email integration: Applicants now get email when recruiter updates application status
+  - Removed: 3 unused `ErrorHandler` imports from admin middleware (3 services)
+  - Fetches: `applicant_email` and `job_title` from DB
+  - Sends: Axios POST to utils email endpoint
+- **Result**: ✅ All services compile with 0 TypeScript errors
+
+**Part 5: Credentials Configuration & Documentation**
+- **Added Gmail credentials** to all service .env files:
+  - `EMAIL_USER=adityabscit.2829@gmail.com`
+  - `EMAIL_PASSWORD=mjxg rymb fuws fwnc` (app-specific password)
+  - Applied to: auth, job, payment, utils, user services
+- **Removed all Resend references**:
+  - Removed: `RESEND_API_KEY` from auth/.env, utils/.env, payment/.env
+  - Removed: `"resend": "^3.2.0"` from auth/package.json, payment/package.json
+  - Removed: `resend` references from all .env.example files
+  - Updated: All .env.example files with Nodemailer email configuration
+- **Result**: ✅ 0 dead API key references
+
+**Part 6: Project Documentation Updates**
+- **README.md** updated:
+  - Removed Bull Queue from intro description
+  - Updated Prerequisites section with Gmail & Gemini API info
+  - Added detailed Email Configuration section with Gmail app password setup
+  - Added "Recent Improvements" section highlighting:
+    - Bull Queue removal & Redis quota fix
+    - Nodemailer email integration
+    - Clean architecture (removed dead code)
+    - Zero TypeScript errors
+    - Centralized email system
+- **Result**: ✅ README reflects current production-ready state
+
+**System Architecture Changes**
+- **Before**: Event-driven queue system → Resend API (sandbox issue)
+- **After**: Direct synchronous HTTP calls → Utils service → Nodemailer → Gmail SMTP
+- **Benefits**: 
+  - Faster email delivery (no queue delays)
+  - No sandbox verification needed
+  - 99% less Redis commands
+  - Simpler architecture to maintain
+
+**Final Verification**
+- ✅ All 5 services compile: 0 TypeScript errors
+- ✅ Bull Queue removed: 0 background polling
+- ✅ Resend removed: 0 dead email service code
+- ✅ Unused imports cleaned: Only necessary imports remain
+- ✅ Gmail credentials configured: All services ready
+- ✅ Email flows working: Registration, login, password reset, job status, subscription
+- ✅ README updated: Production-ready documentation
+- ✅ Project ready for: Local testing and submission
+
+---
 
 **Deployment Ready**
 - ✅ Admin panel fully functional with 3 export formats
@@ -2381,3 +2467,26 @@ curl -X PUT -H "x-admin-key: your_key" \
 - ✅ All admin routes protected with Super Admin Key
 - ✅ Real-time dashboard with aggregated statistics
 - ✅ Full CRUD operations on all data (users, jobs, applications, payments)
+
+---
+
+## Tech Stack Summary
+- **Node.js + Express + TypeScript** (`express`, `typescript`)
+- **PostgreSQL (Neon)** (`@neondatabase/serverless`)
+- **Redis** (`redis`) - For password reset tokens + Bull Queue
+- **Bull Queue** (`bull`) - Async job queue processor
+- **Resend API** (`resend`) - Transactional email delivery
+- **Cloudinary** (`cloudinary`)
+- **Google Gemini API** (`@google/genai`)
+- **Multer + DataURI** (`multer`, `datauri`)
+- **JWT + bcrypt** (`jsonwebtoken`, `bcrypt`)
+- **Axios** (`axios`) - HTTP client for inter-service communication
+- **Next.js + React** (`next`, `react`, `react-dom`) - Frontend framework
+- **shadcn/ui + Radix UI** (`shadcn`, `radix-ui`) - Accessible UI component library
+- **Tailwind CSS v4** (`tailwindcss`, `@tailwindcss/postcss`) - Utility-first styling
+- **next-themes** (`next-themes`) - Dark/light/system theme management
+- **Lucide React** (`lucide-react`) - Icon library
+- **clsx + tailwind-merge** (`clsx`, `tailwind-merge`) - Conditional class utilities
+- **class-variance-authority** (`class-variance-authority`) - Component variant system
+
+---

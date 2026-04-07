@@ -1,6 +1,6 @@
 ﻿# 💼 Job Portal
 
-A microservices-based job portal platform built with Node.js, Express, TypeScript, PostgreSQL, Redis, and Bull Queue.
+A microservices-based job portal platform built with Node.js, Express, TypeScript, PostgreSQL, and Redis.
 
 ## 📋 Project Overview
 
@@ -55,10 +55,12 @@ Job-Portal/
 
 - Node.js 16+
 - npm or yarn
-- PostgreSQL database
-- Redis instance
+- PostgreSQL database (Neon)
+- Redis instance (Upstash)
 - Cloudinary credentials
 - Razorpay keys
+- Gmail account with app password (for Nodemailer email sending)
+- Google Gemini API key
 
 ### 📦 Install Dependencies
 
@@ -73,7 +75,19 @@ cd ../payment && npm install
 
 ### ⚙️ Environment Setup
 
-Create .env files for each service using the respective .env.example files.
+1. Create .env files for each service using the respective .env.example files.
+
+2. **Email Configuration (Nodemailer)**: For each service, set:
+   ```
+   EMAIL_USER=your-gmail@gmail.com
+   EMAIL_PASSWORD=your-app-specific-password
+   ```
+   
+   **Getting Gmail App Password:**
+   - Enable 2-Step Verification in your Google Account
+   - Go to myaccount.google.com/apppasswords
+   - Generate app password for "Mail" and "Windows Computer"
+   - Use the 16-character password in EMAIL_PASSWORD
 
 ### 🧪 Run in Development
 
