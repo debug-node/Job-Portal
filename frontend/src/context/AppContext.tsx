@@ -212,7 +212,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 				},
 			);
 
-			setApplications(data);
+			setApplications(data.applications || []);
 			setApplicationPage(pageNum);
 		} catch (error) {
 			console.log(error);
