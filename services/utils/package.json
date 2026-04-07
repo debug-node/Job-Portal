@@ -15,19 +15,17 @@
 	"license": "ISC",
 	"dependencies": {
 		"@google/genai": "^1.44.0",
-		"resend": "^3.2.0",
-		"bull": "^4.11.5",
 		"cloudinary": "^2.8.0",
 		"cors": "^2.8.5",
 		"dotenv": "^17.2.3",
 		"express": "^5.2.1",
-		"redis": "^5.10.0"
+		"nodemailer": "^8.0.4"
 	},
 	"devDependencies": {
 		"@types/cors": "^2.8.19",
 		"@types/dotenv": "^6.1.1",
 		"@types/express": "^5.0.6",
-		"@types/redis": "^4.0.10",
+		"@types/nodemailer": "^6.4.14",
 		"concurrently": "^9.2.1",
 		"nodemon": "^3.1.11",
 		"typescript": "^5.9.3"
