@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { sql } from "../utils/db.js";
+import axios from "axios";
 
 interface User {
 	user_id: number;
@@ -50,31 +50,22 @@ export const isAuth = async (
 			return;
 		}
 
-		const users = await sql`
-    SELECT u.user_id, u.name, u.email, u.phone_number, u.role, u.bio, u.resume, u.resume_public_id, u.profile_pic, u.profile_pic_public_id, u.subscription,
-    ARRAY_AGG(s.name) FILTER (WHERE s.name IS NOT NULL) as skills
-    FROM users u LEFT JOIN user_skills us ON u.user_id = us.user_id
-    LEFT JOIN skills s ON us.skill_id = s.skill_id
-    WHERE u.user_id = ${decodedPayload.id}
-    GROUP BY u.user_id;
-    `;
+		// Fetch user data from User Service instead of local database
+		const userServiceUrl = process.env.USER_SERVICE_URL || "http://localhost:5002";
+		const userResponse = await axios.get(`${userServiceUrl}/api/user/me`, {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		});
 
-		if (users.length === 0) {
-			res.status(401).json({
-				message: "User associated with this token no longer exists.",
-			});
-			return;
-		}
-
-		const user = users[0] as User;
-
+		const user = userResponse.data as User;
 		user.skills = user.skills || [];
 
 		req.user = user;
-
 		next();
 	} catch (error) {
-		console.error("[Auth] Token validation failed:", (error as Error).message);
+		const errorMsg = error instanceof Error ? error.message : "Unknown error";
+		console.error("[Auth] Token validation failed:", errorMsg);
 		res.status(401).json({
 			message: "Authentication Failed. Please login again",
 		});

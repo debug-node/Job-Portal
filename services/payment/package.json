@@ -16,6 +16,7 @@
 	"dependencies": {
 		"@neondatabase/serverless": "^1.0.2",
 		"resend": "^3.2.0",
+		"axios": "^1.13.5",
 		"@types/jsonwebtoken": "^9.0.10",
 		"bull": "^4.11.5",
 		"cors": "^2.8.6",

@@ -3,21 +3,28 @@ import { AuthenticatedRequest } from "../middlewares/auth.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { sql } from "../utils/db.js";
 import { instance } from "../index.js";
+import axios from "axios";
 import crypto from "crypto";
 import { Resend } from "resend";
 import { subscriptionInvoiceTemplate } from "../template.js";
 
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY as string);
+// Initialize Resend lazily when needed
+const getResendClient = () => {
+	const apiKey = process.env.RESEND_API_KEY;
+	if (!apiKey) {
+		console.warn("⚠️ Resend API key not configured");
+		return null;
+	}
+	return new Resend(apiKey);
+};
 
 export const checkOut = TryCatch(async (req: AuthenticatedRequest, res) => {
 	if (!req.user) {
 		throw new ErrorHandler(401, "No valid User");
 	}
 
-	const user_id = req.user.user_id;
-
-	const [user] = await sql`SELECT * FROM users WHERE user_id = ${user_id}`;
+	const user = req.user;
+	const user_id = user.user_id;
 
 	const subTime = user?.subscription ? new Date(user.subscription).getTime() : 0;
 
@@ -65,30 +72,49 @@ export const paymentVerification = TryCatch(async (req: AuthenticatedRequest, re
 
 		const expiryDate = new Date(now.getTime() + thirtyDays);
 
-		const [updatedUser] =
-			await sql`UPDATE users SET subscription = ${expiryDate} WHERE user_id = ${user?.user_id} RETURNING *`;
+		try {
+			// Call User Service to update subscription
+			const userServiceUrl = process.env.USER_SERVICE_URL || "http://localhost:5002";
+			const userResponse = await axios.put(
+				`${userServiceUrl}/api/admin/users/update/${user?.user_id}`,
+				{ subscription: expiryDate },
+				{
+					headers: {
+						"x-admin-key": process.env.ADMIN_SECRET_KEY,
+					},
+				}
+			);
 
-		// Send subscription invoice email
-		const plan = "HireHeaven Premium - 1 Month";
-		const amount = Number(process.env.RAZORPAY_AMOUNT || 119);
-		const invoiceId = `INV-${razorpay_payment_id}`;
-		const expiryDateStr = expiryDate.toLocaleDateString();
+			const updatedUser = userResponse.data.user;
 
-		const subscriptionMessage = {
-			to: updatedUser?.email,
-			from: "onboarding@resend.dev",
-			subject: "Subscription Confirmation and Invoice - HireHeaven",
-			html: subscriptionInvoiceTemplate(updatedUser?.name, plan, amount, expiryDateStr, invoiceId),
-		};
+			// Send subscription invoice email
+			const plan = "HireHeaven Premium - 1 Month";
+			const amount = Number(process.env.RAZORPAY_AMOUNT || 119);
+			const invoiceId = `INV-${razorpay_payment_id}`;
+			const expiryDateStr = expiryDate.toLocaleDateString();
 
-		resend.emails.send(subscriptionMessage).catch((err) => {
-			console.error("❌ failed to send subscription email", err);
-		});
+			const subscriptionMessage = {
+				to: updatedUser?.email,
+				from: "onboarding@resend.dev",
+				subject: "Subscription Confirmation and Invoice - HireHeaven",
+				html: subscriptionInvoiceTemplate(updatedUser?.name, plan, amount, expiryDateStr, invoiceId),
+			};
 
-		res.json({
-			message: "Subscription Purchased Successfully",
-			updatedUser,
-		});
+			const resend = getResendClient();
+			if (resend) {
+				resend.emails.send(subscriptionMessage).catch((err) => {
+					console.error("❌ failed to send subscription email", err);
+				});
+			}
+
+			res.json({
+				message: "Subscription Purchased Successfully",
+				updatedUser,
+			});
+		} catch (error) {
+			console.error("Error updating subscription:", error);
+			throw new ErrorHandler(500, "Failed to update subscription. Please try again.");
+		}
 	} else {
 		return res.status(400).json({
 			message: "Payment Failed",
