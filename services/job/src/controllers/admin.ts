@@ -1,6 +1,8 @@
+import axios from "axios";
 import { sql } from "../utils/db.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/TryCatch.js";
+import { applicationStatusUpdateTemplate } from "../template.js";
 
 // Get all jobs with pagination
 export const getAllJobs = TryCatch(async (req, res, next) => {
@@ -125,12 +127,21 @@ export const updateApplicationStatus = TryCatch(async (req, res, next) => {
         throw new ErrorHandler(400, "Invalid status");
     }
 
-    const app =
-        await sql`SELECT application_id FROM applications WHERE application_id = ${applicationId}`;
+    const apps = await sql`
+        SELECT 
+            a.application_id, 
+            a.applicant_email,
+            j.title as job_title
+        FROM applications a
+        JOIN jobs j ON a.job_id = j.job_id
+        WHERE a.application_id = ${applicationId}
+    `;
 
-    if (app.length === 0) {
+    if (apps.length === 0) {
         throw new ErrorHandler(404, "Application not found");
     }
+
+    const app = apps[0];
 
     const updated = await sql`
         UPDATE applications 
@@ -138,6 +149,30 @@ export const updateApplicationStatus = TryCatch(async (req, res, next) => {
         WHERE application_id = ${applicationId}
         RETURNING *
     `;
+
+    // Send email to applicant
+    try {
+        const emailMessage = {
+            to: app.applicant_email,
+            subject: 
+                status === "Hired" 
+                    ? `🎉 Congratulations! You got the job: ${app.job_title}`
+                    : `📧 Update: ${app.job_title} Application Status`,
+            html: applicationStatusUpdateTemplate(app.job_title, status),
+        };
+
+        await axios.post(
+            `${process.env.UPLOAD_SERVICE}/api/utils/send-email`,
+            emailMessage
+        );
+        
+        console.log(`✅ Status email sent to ${app.applicant_email}`);
+    } catch (emailError) {
+        console.warn(
+            `⚠️ Failed to send status update email to ${app.applicant_email}:`,
+            (emailError as Error).message
+        );
+    }
 
     res.json({
         message: "Application updated successfully",

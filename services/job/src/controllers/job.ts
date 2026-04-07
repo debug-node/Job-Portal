@@ -5,7 +5,6 @@ import { sql } from "../utils/db.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/TryCatch.js";
 import { applicationStatusUpdateTemplate } from "../template.js";
-import { publishToTopic } from "../producer.js";
 
 export const createCompany = TryCatch(async (req: AuthenticatedRequest, res) => {
 	const user = req.user;
@@ -458,9 +457,12 @@ export const updateApplication = TryCatch(async (req: AuthenticatedRequest, res)
 		html: applicationStatusUpdateTemplate(job.title, updatedApplication.status),
 	};
 
-	publishToTopic(message).catch((error) => {
-		console.error("Failed to queue email to Bull Queue:", error);
-	});
+	// Send email via utils service
+	axios
+		.post(`${process.env.UPLOAD_SERVICE}/api/utils/send-email`, message)
+		.catch((error) => {
+			console.error("Failed to send email:", error.message);
+		});
 
 	res.json({
 		message: "Application status updated successfully",
