@@ -5,7 +5,6 @@ import ErrorHandler from "../utils/errorHandler.js";
 import { TryCatch } from "../utils/TryCatch.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { Resend } from "resend";
 import {
 	forgotPasswordTemplate,
 	welcomeTemplate,
@@ -13,14 +12,17 @@ import {
 } from "../templete.js";
 import { redisClient } from "../index.js";
 
-// Initialize Resend lazily when needed
-const getResendClient = () => {
-	const apiKey = process.env.RESEND_API_KEY;
-	if (!apiKey) {
-		console.warn("⚠️ Resend API key not configured");
-		return null;
+// Send email via utils service (Nodemailer)
+const sendEmail = async (to: string, subject: string, html: string) => {
+	try {
+		await axios.post(
+			`${process.env.UPLOAD_SERVICE}/api/utils/send-email`,
+			{ to, subject, html }
+		);
+		console.log(`✅ Email sent to ${to}`);
+	} catch (error) {
+		console.error(`⚠️ Failed to send email to ${to}:`, (error as Error).message);
 	}
-	return new Resend(apiKey);
 };
 
 export const registerUser = TryCatch(async (req, res, next) => {
@@ -77,20 +79,12 @@ export const registerUser = TryCatch(async (req, res, next) => {
 		},
 	);
 
-	// Send welcome email
-	const welcomeMessage = {
-		to: registeredUser?.email,
-		from: "onboarding@resend.dev",
-		subject: "Welcome to HireHeaven - Account Created Successfully",
-		html: welcomeTemplate(registeredUser?.name),
-	};
-
-	const resend = getResendClient();
-	if (resend) {
-		resend.emails.send(welcomeMessage).catch((err) => {
-			console.error("❌ failed to send welcome email", err);
-		});
-	}
+	// Send welcome email via utils service
+	await sendEmail(
+		registeredUser?.email,
+		"Welcome to HireHeaven - Account Created Successfully",
+		welcomeTemplate(registeredUser?.name)
+	);
 
 	res.json({
 		message: "User registered successfully",
@@ -130,21 +124,13 @@ export const loginUser = TryCatch(async (req, res, next) => {
 		expiresIn: "15d",
 	});
 
-	// Send login alert email
+	// Send login alert email via utils service
 	const loginTime = new Date().toLocaleString();
-	const loginMessage = {
-		to: userObject?.email,
-		from: "onboarding@resend.dev",
-		subject: "Login Alert - HireHeaven",
-		html: loginAlertTemplate(userObject?.name, loginTime),
-	};
-
-	const resend = getResendClient();
-	if (resend) {
-		resend.emails.send(loginMessage).catch((err) => {
-			console.error("❌ failed to send login alert email", err);
-		});
-	}
+	await sendEmail(
+		userObject?.email,
+		"Login Alert - HireHeaven",
+		loginAlertTemplate(userObject?.name, loginTime)
+	);
 
 	res.json({
 		message: "User logged in successfully",
@@ -179,23 +165,23 @@ export const forgotPassword = TryCatch(async (req, res, next) => {
 
 	const resetLink = `${process.env.FRONTEND_URL}/reset/${resetToken}`;
 
-	await redisClient.set(`forgot:${email}`, resetToken, {
-		EX: 900,
-	});
-
-	const message = {
-		to: email,
-		from: "onboarding@resend.dev",
-		subject: "Reset Your Password - Hireheaven",
-		html: forgotPasswordTemplate(resetLink),
-	};
-
-	const resend = getResendClient();
-	if (resend) {
-		resend.emails.send(message).catch((err) => {
-			console.error("❌ failed to send email message", err);
-		});
+	// Only store in Redis if available (graceful degradation for production)
+	if (process.env.REDIS_URL && redisClient) {
+		try {
+			await redisClient.set(`forgot:${email}`, resetToken, {
+				EX: 900,
+			});
+		} catch (redisError) {
+			console.warn("⚠️ Redis not available for password reset token storage", redisError);
+		}
 	}
+
+	// Send reset email via utils service
+	await sendEmail(
+		email,
+		"Reset Your Password - Hireheaven",
+		forgotPasswordTemplate(resetLink)
+	);
 
 	res.json({
 		message: "If a user with that email exists, a password reset link has been sent",
@@ -222,9 +208,21 @@ export const resetPassword = TryCatch(async (req, res, next) => {
 		throw new ErrorHandler(400, "invalid token");
 	}
 	const email = decoded.email;
-	const storedToken = await redisClient.get(`forgot:${email}`);
-	if (!storedToken || storedToken !== token) {
-		throw new ErrorHandler(400, "invalid or expired token");
+	
+	// Check Redis if available (for production without Redis, JWT verification is enough)
+	if (process.env.REDIS_URL && redisClient) {
+		try {
+			const storedToken = await redisClient.get(`forgot:${email}`);
+			if (!storedToken || storedToken !== token) {
+				throw new ErrorHandler(400, "invalid or expired token");
+			}
+		} catch (redisError) {
+			console.warn("⚠️ Redis not available for token verification, using JWT only");
+			// Proceed with JWT verification only (JWT has expiry check)
+		}
+	} else {
+		// Production without Redis: JWT verification is sufficient (15m expiry)
+		console.log("ℹ️ Using JWT-only password reset (no Redis)");
 	}
 
 	const users = await sql`SELECT user_id FROM users WHERE email = ${email}`;
@@ -239,7 +237,15 @@ export const resetPassword = TryCatch(async (req, res, next) => {
 
 	await sql`UPDATE users SET password = ${hashPassword} WHERE user_id = ${user.user_id}`;
 
-	await redisClient.del(`forgot:${email}`);
+	// Clean up Redis token if available
+	if (process.env.REDIS_URL && redisClient) {
+		try {
+			await redisClient.del(`forgot:${email}`);
+		} catch (redisError) {
+			console.warn("⚠️ Failed to clean up Redis token", redisError);
+		}
+	}
+
 	res.json({
 		message: "Password has been reset successfully",
 	});

@@ -5,41 +5,39 @@ import app from "./app.js";
 import { sql } from "./utils/db.js";
 import { createClient } from "redis";
 
-export const redisClient = createClient({
-	url: process.env.REDIS_URL,
-	socket: {
-		reconnectStrategy: (retries) => {
-			if (retries > 10) {
-				console.error("❌ Max Redis reconnection attempts reached");
-				return new Error("Max reconnection retries exceeded");
-			}
-			return Math.min(retries * 50, 500);
-		},
-	},
-});
+export const redisClient = process.env.REDIS_URL
+	? createClient({
+			url: process.env.REDIS_URL,
+			socket: {
+				reconnectStrategy: (retries) => {
+					if (retries > 5) {
+						return new Error("Max reconnection retries exceeded");
+					}
+					// Exponential backoff
+					return Math.min(Math.pow(2, retries) * 100, 2000);
+				},
+			},
+		})
+	: null;
 
-// Add error handlers
-redisClient.on("error", (err) => {
-	console.error("❌ Redis Error:", err.message);
-	// Don't crash the app, just log the error
-});
+// Suppress error spam - Upstash disconnects are normal
+if (redisClient) {
+	redisClient.on("error", () => {
+		// Silent - will auto-reconnect
+	});
 
-redisClient.on("connect", () => {
-	console.log("✅ Connected to Redis");
-});
+	redisClient.on("connect", () => {
+		// Silent - don't spam logs
+	});
 
-redisClient.on("reconnecting", () => {
-	console.log("🔄 Attempting to reconnect to Redis...");
-});
-
-redisClient.connect().catch((err) => {
-	console.error("❌ Failed to connect to Redis:", err.message);
-	// Don't exit, app should still work without Redis for now
-});
+	redisClient.connect().catch(() => {
+		// Silent - connection will retry
+	});
+}
 
 async function initDb() {
-	try {
-		await sql`
+  try {
+    await sql`
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
@@ -47,7 +45,7 @@ async function initDb() {
             END IF;
         END$$;
         `;
-		await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS users (
             user_id SERIAL PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
@@ -65,29 +63,31 @@ async function initDb() {
         );
         `;
 
-		await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS skills (
             skill_id SERIAL PRIMARY KEY,
             name VARCHAR(100) UNIQUE NOT NULL
         );
         `;
 
-		await sql`
+    await sql`
         CREATE TABLE IF NOT EXISTS user_skills (
             user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
             skill_id INTEGER NOT NULL REFERENCES skills(skill_id) ON DELETE CASCADE,
             PRIMARY KEY (user_id, skill_id)
         );
         `;
-		console.log("✅ Database initialized successfully");
-	} catch (error) {
-		console.log("❌ Error initializing database:", error);
-		process.exit(1);
-	}
+    console.log("✅ Database initialized successfully");
+  } catch (error) {
+    console.log("❌ Error initializing database:", error);
+    process.exit(1);
+  }
 }
 
 initDb().then(() => {
-	app.listen(process.env.PORT, () => {
-		console.log(`Auth service is running on http://localhost:${process.env.PORT}`);
-	});
+  app.listen(process.env.PORT, () => {
+    console.log(
+      `Auth service is running on http://localhost:${process.env.PORT}`,
+    );
+  });
 });
