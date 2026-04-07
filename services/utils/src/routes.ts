@@ -228,4 +228,27 @@ router.post("/resume-analyser", async (req, res) => {
 	}
 });
 
+// Email endpoint - used by auth and job services
+import { sendEmail } from "./consumer.js";
+
+router.post("/send-email", async (req, res) => {
+	try {
+		const { to, subject, html } = req.body;
+
+		if (!to || !subject || !html) {
+			return res.status(400).json({
+				message: "Missing required fields: to, subject, html",
+			});
+		}
+
+		const result = await sendEmail(to, subject, html);
+		res.json(result);
+	} catch (error: any) {
+		res.status(500).json({
+			message: "Failed to send email",
+			error: error.message,
+		});
+	}
+});
+
 export default router;
