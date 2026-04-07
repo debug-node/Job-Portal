@@ -13,8 +13,15 @@ import {
 } from "../templete.js";
 import { redisClient } from "../index.js";
 
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY as string);
+// Initialize Resend lazily when needed
+const getResendClient = () => {
+	const apiKey = process.env.RESEND_API_KEY;
+	if (!apiKey) {
+		console.warn("⚠️ Resend API key not configured");
+		return null;
+	}
+	return new Resend(apiKey);
+};
 
 export const registerUser = TryCatch(async (req, res, next) => {
 	const { name, email, password, phoneNumber, role, bio } = req.body;
@@ -78,9 +85,12 @@ export const registerUser = TryCatch(async (req, res, next) => {
 		html: welcomeTemplate(registeredUser?.name),
 	};
 
-	resend.emails.send(welcomeMessage).catch((err) => {
-		console.error("❌ failed to send welcome email", err);
-	});
+	const resend = getResendClient();
+	if (resend) {
+		resend.emails.send(welcomeMessage).catch((err) => {
+			console.error("❌ failed to send welcome email", err);
+		});
+	}
 
 	res.json({
 		message: "User registered successfully",
@@ -129,9 +139,12 @@ export const loginUser = TryCatch(async (req, res, next) => {
 		html: loginAlertTemplate(userObject?.name, loginTime),
 	};
 
-	resend.emails.send(loginMessage).catch((err) => {
-		console.error("❌ failed to send login alert email", err);
-	});
+	const resend = getResendClient();
+	if (resend) {
+		resend.emails.send(loginMessage).catch((err) => {
+			console.error("❌ failed to send login alert email", err);
+		});
+	}
 
 	res.json({
 		message: "User logged in successfully",
@@ -177,9 +190,12 @@ export const forgotPassword = TryCatch(async (req, res, next) => {
 		html: forgotPasswordTemplate(resetLink),
 	};
 
-	resend.emails.send(message).catch((err) => {
-		console.error("❌ failed to send email message", err);
-	});
+	const resend = getResendClient();
+	if (resend) {
+		resend.emails.send(message).catch((err) => {
+			console.error("❌ failed to send email message", err);
+		});
+	}
 
 	res.json({
 		message: "If a user with that email exists, a password reset link has been sent",
