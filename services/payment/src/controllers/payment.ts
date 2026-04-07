@@ -5,17 +5,19 @@ import { sql } from "../utils/db.js";
 import { instance } from "../index.js";
 import axios from "axios";
 import crypto from "crypto";
-import { Resend } from "resend";
 import { subscriptionInvoiceTemplate } from "../template.js";
 
-// Initialize Resend lazily when needed
-const getResendClient = () => {
-	const apiKey = process.env.RESEND_API_KEY;
-	if (!apiKey) {
-		console.warn("⚠️ Resend API key not configured");
-		return null;
+// Send email via utils service (Nodemailer)
+const sendEmail = async (to: string, subject: string, html: string) => {
+	try {
+		await axios.post(
+			`${process.env.UPLOAD_SERVICE || "http://localhost:5001"}/api/utils/send-email`,
+			{ to, subject, html }
+		);
+		console.log(`✅ Email sent to ${to}`);
+	} catch (error) {
+		console.error(`⚠️ Failed to send email to ${to}:`, (error as Error).message);
 	}
-	return new Resend(apiKey);
 };
 
 export const checkOut = TryCatch(async (req: AuthenticatedRequest, res) => {
@@ -87,25 +89,17 @@ export const paymentVerification = TryCatch(async (req: AuthenticatedRequest, re
 
 			const updatedUser = userResponse.data.user;
 
-			// Send subscription invoice email
+			// Send subscription invoice email via utils service
 			const plan = "HireHeaven Premium - 1 Month";
 			const amount = Number(process.env.RAZORPAY_AMOUNT || 119);
 			const invoiceId = `INV-${razorpay_payment_id}`;
 			const expiryDateStr = expiryDate.toLocaleDateString();
 
-			const subscriptionMessage = {
-				to: updatedUser?.email,
-				from: "onboarding@resend.dev",
-				subject: "Subscription Confirmation and Invoice - HireHeaven",
-				html: subscriptionInvoiceTemplate(updatedUser?.name, plan, amount, expiryDateStr, invoiceId),
-			};
-
-			const resend = getResendClient();
-			if (resend) {
-				resend.emails.send(subscriptionMessage).catch((err) => {
-					console.error("❌ failed to send subscription email", err);
-				});
-			}
+			await sendEmail(
+				updatedUser?.email,
+				"Subscription Confirmation and Invoice - HireHeaven",
+				subscriptionInvoiceTemplate(updatedUser?.name, plan, amount, expiryDateStr, invoiceId)
+			);
 
 			res.json({
 				message: "Subscription Purchased Successfully",

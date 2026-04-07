@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import ErrorHandler from "../utils/errorHandler.js";
 
 export const verifyAdmin = (
     req: Request,
