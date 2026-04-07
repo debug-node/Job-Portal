@@ -6,8 +6,15 @@ dotenv.config();
 
 let emailQueue: Queue.Queue;
 
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY as string);
+// Initialize Resend lazily when needed
+const getResendClient = () => {
+	const apiKey = process.env.RESEND_API_KEY;
+	if (!apiKey) {
+		console.warn("⚠️ Resend API key not configured");
+		return null;
+	}
+	return new Resend(apiKey);
+};
 
 export const startSendMailConsumer = async () => {
 	try {
@@ -91,6 +98,11 @@ export const startSendMailConsumer = async () => {
 					html,
 				};
 
+				const resend = getResendClient();
+				if (!resend) {
+					throw new Error("Resend API key not configured");
+				}
+
 				const result = await resend.emails.send(msg);
 
 				console.log(`✅ Email sent! ID: ${result?.data?.id || "sent"}`);
@@ -99,14 +111,6 @@ export const startSendMailConsumer = async () => {
 				console.error(`❌ Email failed:`, (error as Error).message);
 				throw error;
 			}
-		});
-
-		emailQueue.on("failed", (job: Queue.Job, err: Error) => {
-			console.error(`❌ Job ${job.id} failed after retries:`, err.message);
-		});
-
-		emailQueue.on("completed", (job: Queue.Job) => {
-			console.log(`✅ Job ${job.id} completed successfully`);
 		});
 
 		emailQueue.on("error", (error: Error) => {
