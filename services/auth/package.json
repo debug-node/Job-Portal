@@ -15,10 +15,8 @@
 	"license": "ISC",
 	"dependencies": {
 		"@neondatabase/serverless": "^1.0.2",
-		"resend": "^3.2.0",
 		"axios": "^1.13.2",
 		"bcrypt": "^6.0.0",
-		"bull": "^4.11.5",
 		"cors": "^2.8.6",
 		"datauri": "^4.1.0",
 		"dotenv": "^17.2.3",
